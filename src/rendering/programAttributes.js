@@ -36,7 +36,7 @@ class ProgramAttributes {
         this.fragmentShader.setFragmentShaderForTexture();
         this.attributes.push({ name: WebGLShaders.A_TEXTURE_COORDINATES, value: opt.textureCoords, dim: 2 });
         this.uniforms.push(this.createUniform(WebGLShaders.U_TEXTURE, ProgramAttributes.TEXTURE));
-        this.renderer.createTexture(opt.image);
+        this.renderer.renderer.createTexture(opt.image);
         this.setAnimationAttributes(opt);
     }
     setUniformColorAttributes(opt) {

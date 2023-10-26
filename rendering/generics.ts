@@ -69,9 +69,9 @@ export type DrawOpt = {
       camera?: Camera;
       transformationMatrix?: number[];
       /**
-       * Matrix to create animation for images
+       * vectors that indicate where the actual frame and costume of image atlas (sprite sheet) you want to draw
        */
-      animationVector?: number[];
+      animationVector?: [number, number];
 }
 export type Point = { 
       x: number; 

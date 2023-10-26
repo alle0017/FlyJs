@@ -1,6 +1,7 @@
 import { DrawableElementAttributes, } from "./generics.js";
 import { WebGLShaders } from "./shaderGL.js";
 import { GLRenderer } from "./renderer.js";
+import { Renderer } from './generics';
 
 type Uniform = {
       location: WebGLUniformLocation;
@@ -71,7 +72,7 @@ export class ProgramAttributes {
             this.uniforms.push(
                   this.createUniform(WebGLShaders.U_TEXTURE, ProgramAttributes.TEXTURE)
             );
-            this.renderer.createTexture(opt.image);
+            this.renderer.renderer.createTexture(opt.image);
             this.setAnimationAttributes(opt);
       }
       private setUniformColorAttributes(opt: DrawableElementAttributes): void {
