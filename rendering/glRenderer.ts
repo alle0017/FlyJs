@@ -1,5 +1,8 @@
 import { Color, Axis, } from "./generics.js";
 
+/**
+ * Represents a WebGL buffer.
+ */
 type Buffer = {
       buffer: WebGLBuffer;
       location: number;
@@ -11,6 +14,10 @@ type Buffer = {
       offset?: number;
       normalize?: boolean;
 }
+
+/**
+ * Represents a WebGL uniform.
+ */
 type Uniform = {
       location: WebGLUniformLocation;
       value: number | Iterable<number>;
@@ -20,10 +27,14 @@ type Uniform = {
 }
 type TypedArray = Float32Array | Float64Array | Uint16Array | Uint32Array | Int16Array | Int32Array;
 
+/**
+ * WebGL Renderer Delegate class for handling WebGL operations.
+ */
 export class GLRendererDelegate {
 
       private gl: WebGLRenderingContext;
 
+      // Constants for data types
       static readonly axis = Axis;
       static readonly MAT4 = 1;
       static readonly TEXTURE = 2;
@@ -32,9 +43,15 @@ export class GLRendererDelegate {
       static readonly MAT3 = 5;
       static readonly VEC2 = 6;
       
+      // WebGL buffer types
       ARRAY_BUFFER: number;
       ELEMENT_ARRAY_BUFFER: number;
 
+      /**
+     * Creates a new GLRendererDelegate.
+     * @param {WebGLRenderingContext | null} ctx - The WebGL rendering context.
+     * @throws {Error} Throws an error if WebGL is not available.
+     */
       constructor(ctx: WebGLRenderingContext | null){
             if(!ctx) throw new Error("WebGL not available");
             this.gl = ctx;
@@ -114,6 +131,11 @@ export class GLRendererDelegate {
             this.gl.bufferData(type, data, staticDraw? this.gl.STATIC_DRAW: this.gl.DYNAMIC_DRAW);
             return buffer;
       }
+      /**
+      * Creates a WebGL texture from an image.
+      * @param {HTMLImageElement} image - The image used to create the texture.
+      * @returns {WebGLTexture | null} The created texture.
+      */
       createTexture(image: HTMLImageElement){
 
             const texture = this.gl.createTexture();
@@ -131,6 +153,10 @@ export class GLRendererDelegate {
             //this.gl.generateMipmap(this.gl.TEXTURE_2D);
             return texture;
       }
+      /**
+      * Enables culling and depth test in WebGL.
+      * @param {boolean} depthTest - If true, enables depth testing.
+      */
       enableCulling(depthTest: boolean = true): void {
             depthTest && this.gl.enable(this.gl.DEPTH_TEST);
             this.gl.enable(this.gl.CULL_FACE);
@@ -138,21 +164,41 @@ export class GLRendererDelegate {
             this.gl.cullFace(this.gl.BACK);
             this.gl.depthFunc(this.gl.LEQUAL);
       }
+      /**
+      *Resizes the WebGL canvas.
+      * @param {number} width - The new width of the canvas.
+      * @param {number} height - The new height of the canvas.
+      */
       resizeCanvas(width: number, height: number): void {
             this.gl.canvas.width = width;
             this.gl.canvas.height = height;
       }
+      /**
+      * Retrieves the uniform locations in a WebGL program.
+      * @param {Uniform[]} uniforms - An array of uniform objects.
+      * @param {WebGLProgram} program - The WebGL program.
+      */     
       getUniformLocation(uniforms: Uniform[], program: WebGLProgram){
             for(let el of uniforms) {
                   el.location = this.gl.getUniformLocation(program, el.name) as WebGLUniformLocation;
             }
       }
+      /**
+      * Retrieves the attribute locations in a WebGL program.
+      * @param {Buffer[]} attributes - An array of buffer objects.
+      * @param {WebGLProgram} program - The WebGL program.
+      * @returns {Buffer[]} An array of buffers with assigned locations.
+      */
       getAttribLocations(attributes: Buffer[], program: WebGLProgram): Buffer[] {
             for(let el of attributes){
                   el.location = this.gl.getAttribLocation(program, el.attributeName);
             }
             return attributes;
       }
+      /**
+      * Binds buffers for rendering in WebGL.
+      * @param {Buffer[]} buffers - An array of buffer objects.
+      */
       bindBuffers(buffers: Buffer[]): void {
             for(let bufferData of buffers){
                   this.gl.bindBuffer(this.gl.ARRAY_BUFFER, bufferData.buffer);
@@ -167,9 +213,17 @@ export class GLRendererDelegate {
                   );
             }
       }
+      /**
+      * Binds an indices buffer for rendering in WebGL.
+      * @param {WebGLBuffer} buffer - The WebGL buffer containing indices.
+      */
       bindIndicesBuffer(buffer: WebGLBuffer){
             this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer)
       }
+      /**
+      * Binds uniforms for rendering in WebGL.
+      * @param {Uniform[]} uniforms - An array of uniform objects.
+      */
       bindUniforms(uniforms: Uniform[]): void {
             for(let el of uniforms) {
                   switch(el.type) {
@@ -209,9 +263,17 @@ export class GLRendererDelegate {
             }
             this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BITS);
       }
+      /**
+      * Draws elements in WebGL.
+      * @param {number} length - The number of elements to draw.
+      */
       draw(length: number): void {
             this.gl.drawElements(this.gl.TRIANGLES, length, this.gl.UNSIGNED_SHORT, 0)
       }
+      /**
+      * Sets the active WebGL program.
+      * @param {WebGLProgram | null} program - The WebGL program to use.
+      */
       useProgram(program: WebGLProgram | null){
             this.gl.useProgram(program);
       } 

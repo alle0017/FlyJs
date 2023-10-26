@@ -1,5 +1,12 @@
 import { Axis, AxisType, Point, } from "./generics.js";
 export namespace Matrix {
+      /**
+      * Generates a 4x4 rotation matrix.
+      * @param {number} angle - Rotation angle in degrees.
+      * @param {AxisType} axis - Axis of rotation (X, Y, or Z).
+      * @param {boolean} toRad - Whether the input angle is in radians (default is true).
+      * @returns {number[]} - The 4x4 rotation matrix.
+      */
       export function rotation(angle: number, axis: AxisType, toRad: boolean = true): number[] {
             if(toRad) angle = degToRad(angle);
             const c = Math.cos(angle);
@@ -27,6 +34,11 @@ export namespace Matrix {
                   0, 0, 0, 1,
             ];
       }
+      /**
+      * Generates a 4x4 translation matrix.
+      * @param {Point} point - Translation values in the x, y, and z directions.
+      * @returns {number[]} - The 4x4 translation matrix.
+      */
       export function translate(point: Point){
             return [
                   1, 0, 0, 0,
@@ -35,6 +47,11 @@ export namespace Matrix {
                   point.x, point.y, point.z, 1,
             ]
       }
+      /**
+      * Generates a 4x4 scale matrix.
+      * @param {number | Point} scale - Scaling factor or scaling values in the x, y, and z directions.
+      * @returns {number[]} - The 4x4 scale matrix.
+      */
       export function scale(scale: number | Point): number[]{
             if(typeof scale === 'number'){
                   return [
@@ -51,6 +68,15 @@ export namespace Matrix {
                   0, 0, 0, 1,
             ]
       }
+      /**
+      * Generates a 4x4 perspective projection matrix.
+      * @param {number} fieldOfView - Field of view angle in degrees.
+      * @param {number} resolution - Aspect ratio (width/height).
+      * @param {number} near - Near clipping plane.
+      * @param {number} far - Far clipping plane.
+      * @param {boolean} toRad - Whether the input field of view angle is in radians (default is true).
+      * @returns {number[]} - The 4x4 perspective projection matrix.
+      */
       export function prospective(fieldOfView: number, resolution: number, near: number, far: number, toRad: boolean = true) {
             if(toRad) fieldOfView = degToRad(fieldOfView);
             const f = Math.tan(Math.PI * 0.5 - 0.5 * fieldOfView);
@@ -69,6 +95,15 @@ export namespace Matrix {
             0, 0, 1, 0,
             0, 0, 0, 1,
       ]
+      // ... (other utility functions)
+
+      /**
+      * Computes the dot product of two matrices.
+      * @param {number[]} m1 - First matrix represented as a flat array.
+      * @param {number} col1 - Number of columns in the first matrix.
+      * @param {number[]} m2 - Second matrix represented as a flat array.
+      * @returns {number[]} - Resulting matrix of the dot product.
+      */
       export function dot(m1: number[], col1: number, m2: number[]): number[] {
             const res: number[] = [];
             const row1 = m1.length/col1;
@@ -96,31 +131,58 @@ export namespace Matrix {
       }
       export const composeMatrix = dot;
       
+      /**
+      * Computes the inverse of a square matrix represented as a flat array.
+      * @param {number[]} mat - The input matrix represented as a flat array.
+      * @param {number} col - Number of columns in the matrix.
+      * @returns {number[]} - The inverse of the matrix represented as a flat array.
+      */
       export function invert(mat: number[], col: number): number[] {
+            // Convert the flat array to a 2D array (matrix).
             let m: number[][] = toMatrix(mat, col);
+      
+            // Create an identity matrix with the same dimensions as the input matrix.
             let I = identityMatrix(col);
+      
+            // Apply Gaussian elimination and backward substitution to find the inverse.
             m = backwardTransformation(gaussJordan(m, I));
             I = backwardTransformation(I);
             m = gaussJordan(m, I);
             m = backwardTransformation(m);
             I = backwardTransformation(I);
-            for( let i = 0; i < m.length; i++ ) {
-                  if(!m[i][i]){
-                        console.warn(`cannot invert the matrix ${mat}`);
-                        return mat;
-                  }
-                  for(let j = 0; j < I[i].length; j++ ) {
-                        I[i][j] /= m[i][i];
-                  }
+      
+            // Normalize the resulting matrix by dividing each element by its main diagonal element.
+            for (let i = 0; i < m.length; i++) {
+            if (!m[i][i]) {
+                  // If the main diagonal element is zero, the matrix is singular, and inversion is not possible.
+                  console.warn(`Cannot invert the matrix ${mat}`);
+                  return mat;
             }
+            for (let j = 0; j < I[i].length; j++) {
+                  I[i][j] /= m[i][i];
+            }
+            }
+      
+            // Convert the inverse matrix to a flat array and return it.
             return flat(I);
       }
 
+      /**
+      * Flattens a 2D array (matrix) into a 1D array.
+      * @param {number[][]} m - The input 2D array.
+      * @returns {number[]} - The flattened 1D array.
+      */
       export function flat(m: number[][]): number[] {
             const res: number[] = [];
             m.forEach(el => res.push(...el));
             return res;
       }
+      /**
+      * Converts a matrix represented as a flat array to a 2D array.
+      * @param {number[]} vec - Matrix represented as a flat array.
+      * @param {number} col - Number of columns in the matrix.
+      * @returns {number[][]} - Matrix represented as a 2D array.
+      */
       export function toMatrix(vec: number[], col: number): number[][] {
             const m: number[][] = [];
             const rows = vec.length/col;
@@ -160,7 +222,7 @@ export namespace Matrix {
             }
             return res;
       }
-      function identityMatrix(n: number): number[][] {
+      export function identityMatrix(n: number): number[][] {
             const res: number[][] = [];
             for(let i = 0; i < n; i++) {
                   res.push([]);
@@ -175,6 +237,11 @@ export namespace Matrix {
             }
             return res;
       }
+      /**
+      * Calculates the determinant of a square matrix.
+      * @param {number[][]} mat - The input square matrix.
+      * @returns {number} - The determinant of the matrix.
+      */
       export function det(mat: number[][]): number {
             const i = 0;
             const m = [...mat];
@@ -190,7 +257,11 @@ export namespace Matrix {
       export function det2x2(m: number[][]): number {
             return m[0][0]*m[1][1] - m[0][1]*m[1][0];
       }
-
+      /**
+      * Transposes a square matrix represented as a 2D array.
+      * @param {number[][]} m - The input square matrix.
+      * @returns {number[][]} - The transposed matrix.
+      */
       export function transposeMatrix(m: number[][]): number[][] {
             const T: number[][] = [];
             for(let i = 0; i < m.length; i++){
@@ -201,6 +272,12 @@ export namespace Matrix {
             }
             return T;
       }
+      /**
+      * Converts a matrix represented as a flat array to its transpose.
+      * @param {number[]} m - Matrix represented as a flat array.
+      * @param {number} col - Number of columns in the matrix.
+      * @returns {number[]} - Transposed matrix represented as a flat array.
+      */
       export function transpose(m: number[], col: number): number[] {
             const T: number[] = [];
             const rows = m.length/col;
@@ -211,6 +288,13 @@ export namespace Matrix {
             }
             return T;
       }
+      /**
+      * Deletes a specified row and column from a matrix.
+      * @param {number[][]} m - The input matrix.
+      * @param {number} row - Index of the row to delete.
+      * @param {number} col - Index of the column to delete.
+      * @returns {number[][]} - The resulting matrix after deletion.
+      */
       export function deleteRowAndCol(m: number[][], row: number, col: number){
             const res: number[][] = []
             for(let i = 0, ii = 0; i < m.length; i++){
@@ -225,6 +309,13 @@ export namespace Matrix {
             }
             return res;
       }
+      /**
+      * Substitutes a column in a matrix with a given vector.
+      * @param {number[][]} m - The input matrix.
+      * @param {number} col - Index of the column to substitute.
+      * @param {number[]} vec - The vector to substitute into the column.
+      * @returns {number[][]} - The resulting matrix after substitution.
+      */
       export function substituteColumn(m: number[][], col: number, vec: number[]): number[][] {
             const res: number[][] = [];
             for(let el of m){
@@ -235,6 +326,11 @@ export namespace Matrix {
             }
             return res;
       }
+      /**
+      * Converts degrees to radians.
+      * @param {number} deg - Angle in degrees.
+      * @returns {number} - Angle in radians.
+      */
       export function degToRad(deg: number): number {
             return deg * Math.PI / 180; 
       }
