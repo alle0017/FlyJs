@@ -1,4 +1,4 @@
-import { GLRenderer } from "../rendering/renderer.js";
+import { RendererDelegate } from "../rendering/renderer.js";
 class Game {
     constructor() {
         this.time = 0;
@@ -12,7 +12,7 @@ class Game {
         cvs.style.top = '0px';
         cvs.style.left = '0px';
         document.body.appendChild(cvs);
-        this.renderer = new GLRenderer(cvs.getContext('webgl'));
+        this.renderer = new RendererDelegate(cvs);
     }
     static getInstance() {
         return this.instance;

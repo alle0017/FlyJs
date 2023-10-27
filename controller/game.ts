@@ -1,10 +1,10 @@
-import { GLRenderer } from "../rendering/renderer.js";
+import { RendererDelegate } from "../rendering/renderer.js";
 
 export class Game {
 
       private static instance: Game = new Game();
       
-      renderer: GLRenderer;
+      renderer: RendererDelegate;
       time: number = 0;
       functions: (()=>void)[] = [];
 
@@ -20,7 +20,7 @@ export class Game {
             cvs.style.left = '0px';
             document.body.appendChild(cvs);
 
-            this.renderer = new GLRenderer(cvs.getContext('webgl'));
+            this.renderer = new RendererDelegate(cvs);
       }
 
       static getInstance(): Game {

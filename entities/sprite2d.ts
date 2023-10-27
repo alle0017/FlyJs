@@ -182,12 +182,12 @@ export class Sprite2D extends Entity {
             const x = this.currentFrame * this.deltaFrame;
             const y = this.currentCostume * this.deltaCostume;
             this.animationVector = [x, y];
-            }
+      }
       
-            /**
-            * Animates the sprite by changing frames based on the animation delay.
-            */
-            animate() {
+      /**
+      * Animates the sprite by changing frames based on the animation delay.
+      */
+      animate() {
             if (this.game.time - this.deltaTime <= this.animationDelay) return;
             this.deltaTime = this.game.time;
             this.frame++;
