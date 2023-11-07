@@ -4,10 +4,10 @@ import { Matrix } from './matrices.js'
   
 
 export class ViewDelegate {
-      // Camera properties
-      private _near: number = 0.1;               // Near clipping plane distance.
-      private _far: number = 50;                 // Far clipping plane distance.
-      private _fieldOfView: number = 60;         // Field of view angle in degrees.
+
+      private _near: number = 0.1;         
+      private _far: number = 50;               
+      private _fieldOfView: number = 60;  
 
 
       prospectiveMatrix: number[] = [];
@@ -73,11 +73,7 @@ export class ViewDelegate {
             }
             return null;
       }
-      /**
-      * Selects the scale matrix from DrawOpt or creates one based on the scale vector.
-      * @param {DrawOpt} opt - The drawing options.
-      * @returns {Float32Array | null} The scale matrix or null if not provided.
-      */
+
       private selectScaleMatrix(opt: DrawOpt): number[] | null{
             if(opt.scaleMatrix){
                   return  opt.scaleMatrix;
@@ -86,11 +82,7 @@ export class ViewDelegate {
             }
             return null;
       }
-      /**
-      * Combines translation, rotation, and scale matrices to create the final transformation matrix.
-      * @param {DrawOpt} opt - The drawing options.
-      * @returns {Float32Array} The transformation matrix.
-      */
+
       getTransformationMatrix(opt?: DrawOpt): number[] {
             let transformationMatrix = Matrix.IDENTITY_4X4;
             

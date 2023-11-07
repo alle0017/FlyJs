@@ -1,8 +1,21 @@
 import { Camera } from './rendering/camera.js';
 import { Sprite2D } from './entities/sprite2d.js';
 import { Game } from './controller/game.js';
-
+import { WebGLShader } from './rendering/prova/GLShaders.js';
+/*
 async function main(){
+
+
+console.log(
+      new WebGlShader(WebGlShader.FRAGMENT)
+      .setFragmentShaderForTexture()
+      .get()
+      );
+      
+      console.log(new WebGlShader(WebGlShader.VERTEX)
+      .setVertexShaderForTexture()
+      .get()
+      );
       const camera = new Camera();
       const map = new Map();
       const game = Game.getInstance();
@@ -28,4 +41,13 @@ async function main(){
       game.functions.push(anim);
       game.loop();
 }
-main();
+main();*/
+const shader = 
+new WebGLShader()
+.useDisplacementMap()
+.get()
+console.log(
+      shader.vertex
+      +'\n'+
+      shader.fragment
+);

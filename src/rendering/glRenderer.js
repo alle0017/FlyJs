@@ -11,6 +11,10 @@ export class WebGLRenderer {
         this.FRAGMENT_SHADER = this.gl.FRAGMENT_SHADER;
         this.VERTEX_SHADER = this.gl.VERTEX_SHADER;
         this.FLOAT = this.gl.FLOAT;
+        this.BYTE = this.gl.BYTE;
+        this.SHORT = this.gl.SHORT;
+        this.UNSIGNED_BYTE = this.gl.UNSIGNED_BYTE;
+        this.UNSIGNED_SHORT = this.gl.UNSIGNED_SHORT;
     }
     attachShader(program, shaderCode, type) {
         const shader = this.createShader(shaderCode, type);

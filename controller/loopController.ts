@@ -15,7 +15,7 @@ export class LoopsController {
 
       constructor(){}
 
-      private main(){
+      private main(): (arg0: number)=>void {
             const main = (time: number)=>{
                   this.time = time;
                   for(let attributes of this.functions)
@@ -37,20 +37,20 @@ export class LoopsController {
             }
       }
 
-      startLoop(){
+      startLoop(): void {
             if(this.inExecution) return;
             const main = this.main();
             this.requestId = requestAnimationFrame(main);
             this.inExecution = true;
       }
 
-      stopLoop(){
+      stopLoop(): void {
             if(!this.inExecution) return;
             cancelAnimationFrame(this.requestId);
             this.inExecution = false;
       }
 
-      addFunction(func: LoopedFunction, priority?: number) {
+      addFunction(func: LoopedFunction, priority?: number): void {
             const attributes = this.loopedFunctionAttributesFactory(func, priority);
             for(let i = this.functions.length; i >= 0 ; i--){
                   if(attributes.priority > this.functions[i].priority) continue;

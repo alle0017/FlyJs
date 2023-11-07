@@ -43,6 +43,10 @@ export abstract class Renderer {
       readonly abstract MAT4: number;
       readonly abstract TEXTURE: number;
       readonly abstract FLOAT: number;
+      readonly abstract BYTE: number;
+      readonly abstract SHORT: number;
+      readonly abstract UNSIGNED_BYTE: number;
+      readonly abstract UNSIGNED_SHORT: number;
       readonly abstract VEC4: number;
       readonly abstract MAT3: number;
       readonly abstract VEC2: number;

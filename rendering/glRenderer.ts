@@ -11,6 +11,10 @@ export class WebGLRenderer implements Model.Renderer {
       readonly MAT3 = 5;
 
       readonly FLOAT;
+      readonly BYTE;
+      readonly SHORT;
+      readonly UNSIGNED_BYTE;
+      readonly UNSIGNED_SHORT;
 
       readonly BUFFER: number;
       readonly INDEX_BUFFER: number;
@@ -26,6 +30,10 @@ export class WebGLRenderer implements Model.Renderer {
             this.VERTEX_SHADER = this.gl.VERTEX_SHADER;
 
             this.FLOAT = this.gl.FLOAT;
+            this.BYTE = this.gl.BYTE;
+            this.SHORT = this.gl.SHORT;
+            this.UNSIGNED_BYTE = this.gl.UNSIGNED_BYTE;
+            this.UNSIGNED_SHORT = this.gl.UNSIGNED_SHORT;
       }
 
       private attachShader(program: WebGLProgram, shaderCode: string, type: number){

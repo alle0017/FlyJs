@@ -30,10 +30,9 @@ export class ViewDelegate {
     }
     constructor(_resolution) {
         this._resolution = _resolution;
-        // Camera properties
-        this._near = 0.1; // Near clipping plane distance.
-        this._far = 50; // Far clipping plane distance.
-        this._fieldOfView = 60; // Field of view angle in degrees.
+        this._near = 0.1;
+        this._far = 50;
+        this._fieldOfView = 60;
         this.prospectiveMatrix = [];
         // Update the perspective matrix based on initial camera properties
         this.updateProspectiveMatrix();
@@ -60,11 +59,6 @@ export class ViewDelegate {
         }
         return null;
     }
-    /**
-    * Selects the scale matrix from DrawOpt or creates one based on the scale vector.
-    * @param {DrawOpt} opt - The drawing options.
-    * @returns {Float32Array | null} The scale matrix or null if not provided.
-    */
     selectScaleMatrix(opt) {
         if (opt.scaleMatrix) {
             return opt.scaleMatrix;
@@ -74,11 +68,6 @@ export class ViewDelegate {
         }
         return null;
     }
-    /**
-    * Combines translation, rotation, and scale matrices to create the final transformation matrix.
-    * @param {DrawOpt} opt - The drawing options.
-    * @returns {Float32Array} The transformation matrix.
-    */
     getTransformationMatrix(opt) {
         let transformationMatrix = Matrix.IDENTITY_4X4;
         // If no drawing options provided, return the identity matrix

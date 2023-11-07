@@ -1,6 +1,7 @@
+import * as Type from './rendererModel.js';
+
 import { WebGLRenderer } from "./glRenderer.js";
 import { ViewDelegate } from "./viewMatrix.js";
-import * as Type from './rendererModel.js';
 import { ProgramAttributes } from "./programAttributes.js";
 import { DrawOpt } from "./generics.js";
 
