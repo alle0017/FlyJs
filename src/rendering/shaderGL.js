@@ -117,8 +117,8 @@ class WebGLShaders {
         return this
             .addAttribute(WebGLShaders.A_POSITION, WebGLShaders.VEC3)
             .addUniform(WebGLShaders.U_TRANSFORM, WebGLShaders.MAT4)
-            .addUniform(WebGLShaders.U_PROSPECTIVE, WebGLShaders.MAT4)
-            .setReturnedValue(`${WebGLShaders.U_PROSPECTIVE} * ${WebGLShaders.U_TRANSFORM} * vec4(${WebGLShaders.A_POSITION}, 1.0)`);
+            .addUniform(WebGLShaders.U_perspective, WebGLShaders.MAT4)
+            .setReturnedValue(`${WebGLShaders.U_perspective} * ${WebGLShaders.U_TRANSFORM} * vec4(${WebGLShaders.A_POSITION}, 1.0)`);
     }
     setVertexShaderForTexture() {
         if (this.shaderType !== WebGLShaders.VERTEX)
@@ -187,6 +187,6 @@ WebGLShaders.V_TEXTURE_COORDINATES = 'v_text_coord';
 WebGLShaders.V_COLOR = 'v_color';
 WebGLShaders.U_TEXTURE = 'u_texture';
 WebGLShaders.U_TRANSFORM = 'u_transform';
-WebGLShaders.U_PROSPECTIVE = 'u_prospective';
+WebGLShaders.U_perspective = 'u_perspective';
 WebGLShaders.U_ANIMATION = 'u_animation';
 export { WebGLShaders };

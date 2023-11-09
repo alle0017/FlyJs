@@ -467,13 +467,13 @@ const indices = [
 
                   uniform mat4 u_scale;
 
-                  uniform mat4 u_prospective;
+                  uniform mat4 u_perspective;
 
                   uniform mat4 u_camera;
 
                   void main() {
                         v_text_coord = a_text_coord;
-                        gl_Position = u_prospective * u_camera * u_translation * u_rotation * u_scale * vec4(a_position, 1.0);
+                        gl_Position = u_perspective * u_camera * u_translation * u_rotation * u_scale * vec4(a_position, 1.0);
                   }
             `;*/
 
@@ -500,13 +500,13 @@ const indices = [
 
                   uniform mat4 u_scale;
 
-                  uniform mat4 u_prospective;
+                  uniform mat4 u_perspective;
 
                   uniform mat4 u_camera;
 
                   void main() {
                         v_color = a_color;
-                        gl_Position = u_prospective * u_camera * u_translation * u_rotation * u_scale * vec4(a_position, 1.0);
+                        gl_Position = u_perspective * u_camera * u_translation * u_rotation * u_scale * vec4(a_position, 1.0);
                   }
             `;
             `
@@ -527,9 +527,9 @@ const indices = [
             .addAttribute('a_color', WebGLShaders.VEC4)
             .addVarying('v_color', WebGLShaders.VEC4)
             .addUniform('u_transform', WebGLShaders.MAT4)
-            .addUniform('u_prospective', WebGLShaders.MAT4)
+            .addUniform('u_perspective', WebGLShaders.MAT4)
             .addCode('v_color = a_color;')
-            .setReturnedValue('u_prospective * u_transform * vec4(a_position, 1.0)')
+            .setReturnedValue('u_perspective * u_transform * vec4(a_position, 1.0)')
             .get();
             
             const fSourceCode = new WebGLShaders(WebGLShaders.FRAGMENT)
@@ -565,11 +565,11 @@ const indices = [
 
             const transform = this.createUniform('u_transform');
 
-            const prospective = this.createUniform('u_prospective');
+            const perspective = this.createUniform('u_perspective');
 
             this.getUniformLocation([
                   transform,
-                  prospective,
+                  perspective,
             ], program);
 
             if(!indices) indices = fillIndexBuffer(indices);
@@ -589,11 +589,11 @@ const indices = [
 
                   transform.value = this.setTransformationMatrix(opt);
 
-                  prospective.value = this.prospectiveMatrix;
+                  perspective.value = this.perspectiveMatrix;
 
                   this.bindUniformMatrices4x4([
                         transform,
-                        prospective,
+                        perspective,
                   ]);
 
                   this.gl.drawElements(this.gl.TRIANGLES, indicesBuffer.data.length, this.gl.UNSIGNED_SHORT, 0)
@@ -605,9 +605,9 @@ const indices = [
             .addAttribute('a_text_coord', WebGLShaders.VEC2)
             .addVarying('v_text_coord', WebGLShaders.VEC2)
             .addUniform('u_transform', WebGLShaders.MAT4)
-            .addUniform('u_prospective', WebGLShaders.MAT4)
+            .addUniform('u_perspective', WebGLShaders.MAT4)
             .addCode('v_text_coord = a_text_coord;')
-            .setReturnedValue('u_prospective * u_transform * vec4(a_position, 1.0)')
+            .setReturnedValue('u_perspective * u_transform * vec4(a_position, 1.0)')
             .get();
 
             const fSourceCode = new WebGLShaders(WebGLShaders.FRAGMENT)
@@ -643,13 +643,13 @@ const indices = [
 
             const transform = this.createUniform('u_transform');
 
-            const prospective = this.createUniform('u_prospective');
+            const perspective = this.createUniform('u_perspective');
 
             const texture = this.createUniform('u_texture');
 
             this.getUniformLocation([
                   transform,
-                  prospective,
+                  perspective,
                   texture,
             ], program);
 
@@ -672,11 +672,11 @@ const indices = [
 
                   transform.value = this.setTransformationMatrix(opt);
 
-                  prospective.value = this.prospectiveMatrix;
+                  perspective.value = this.perspectiveMatrix;
 
                   this.bindUniformMatrices4x4([
                         transform,
-                        prospective,
+                        perspective,
                   ]);
                   
                   this.gl.uniform1i(texture.location, 0);

@@ -1,8 +1,8 @@
 import { Load } from '../controller/loadData.js';
 import { Entity } from "./entity.js";
 import { Axis } from '../rendering/generics.js';
-import { Camera } from '../rendering/camera.js';
-import { Matrix } from '../rendering/matrices.js';
+import { Camera } from '../rendering/matrix/camera.js';
+import { Matrix } from '../rendering/matrix/matrices.js';
 /**
 * Represents a 2D sprite in a game.
 */

@@ -1,4 +1,4 @@
-import { Axis, AxisType, Point, } from "./generics.js";
+import { Axis, AxisType, Point, } from "../generics.js";
 export namespace Matrix {
       /**
       * Generates a 4x4 rotation matrix.
@@ -77,7 +77,7 @@ export namespace Matrix {
       * @param {boolean} toRad - Whether the input field of view angle is in radians (default is true).
       * @returns {number[]} - The 4x4 perspective projection matrix.
       */
-      export function prospective(fieldOfView: number, resolution: number, near: number, far: number, toRad: boolean = true) {
+      export function perspective(fieldOfView: number, resolution: number, near: number, far: number, toRad: boolean = true) {
             if(toRad) fieldOfView = degToRad(fieldOfView);
             const f = Math.tan(Math.PI * 0.5 - 0.5 * fieldOfView);
             const rangeInv = 1.0 / (near - far);

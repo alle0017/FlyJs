@@ -17,10 +17,10 @@ export class ProgramAttributes {
       attributes: Type.BufferData[] = [];
       uniforms: Type.UniformData[] = [];
 
-      // Index for animation, transform, and prospective uniforms
+      // Index for animation, transform, and perspective uniforms
       animation = -1;
       transform = 0;
-      prospective = 1;
+      perspective = 1;
 
       constructor(private renderer: Renderer.RendererDelegate, opt: Renderer.DrawableElementAttributes){ 
             this.getProgramAttributes(opt);
@@ -83,7 +83,7 @@ export class ProgramAttributes {
             });
             this.uniforms.push(
                   this.renderer.createUniform(WebGLShaders.U_TRANSFORM, this.renderer.MAT4),
-                  this.renderer.createUniform(WebGLShaders.U_PROSPECTIVE, this.renderer.MAT4)
+                  this.renderer.createUniform(WebGLShaders.U_perspective, this.renderer.MAT4)
             );
 
             this.setImageAttributes(opt);
@@ -91,9 +91,9 @@ export class ProgramAttributes {
             this.setUniformColorAttributes(opt);
       }
 
-      setMatrices(transform: number[], prospective: number[], animationVector?: [number, number]): void {
+      setMatrices(transform: number[], perspective: number[], animationVector?: [number, number]): void {
             this.uniforms[this.transform].value = transform;
-            this.uniforms[this.prospective].value = prospective;
+            this.uniforms[this.perspective].value = perspective;
             if (this.animation >= 0) {
                   this.uniforms[this.animation].value = animationVector || [0, 0];
             }

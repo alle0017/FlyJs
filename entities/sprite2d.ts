@@ -2,8 +2,8 @@ import { Load } from '../controller/loadData.js';
 import { Entity } from "./entity.js";
 import { Game } from '../controller/game.js';
 import { DrawFunction, Axis, Point } from '../rendering/generics.js';
-import { Camera } from '../rendering/camera.js';
-import { Matrix } from '../rendering/matrices.js';
+import { Camera } from '../rendering/matrix/camera.js';
+import { Matrix } from '../rendering/matrix/matrices.js';
 
 type Sprite2DOpt = {
       img: string | HTMLImageElement;

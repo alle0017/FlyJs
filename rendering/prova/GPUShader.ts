@@ -1,5 +1,11 @@
 import * as Model from './shaderModel.js';
 
+type TypeInfos = {
+      type: GPUVertexFormat;
+      components: number;
+      size: number;
+}
+
 export class WebGPUShader extends Model.Shader {
       
       private vInput: string = '';
@@ -13,10 +19,39 @@ export class WebGPUShader extends Model.Shader {
       private readonly UNIFORMS_STRUCT: string = 'Uniforms';
       private readonly ATTRIBUTES_STRUCT: string = 'VertexInput';
 
+
       private readonly UNIFORMS_VARIABLE: string = 'uniforms';
       private readonly ATTRIBUTES_VARIABLE: string = 'vInput';
       private readonly VARYING_VARIABLE: string = 'fInput';
-      private readonly DEFAULT_VERTEX_RETURNED_VALUE: string = `${this.UNIFORMS_VARIABLE}.prospective * ${this.UNIFORMS_VARIABLE}.transformation * vec4f(${this.ATTRIBUTES_VARIABLE}.vertex_position, 1)`;
+      private readonly DEFAULT_VERTEX_RETURNED_VALUE: string = `vec4f(${this.ATTRIBUTES_VARIABLE}.vertex_position, 1)`;
+
+      private static typeSize: TypeInfos[] = [];
+
+      
+
+      protected addInfo( array: Model.DataLayoutInfos[], name: string, type: number, bindingLocation: number ): void {  
+
+            const typeInfo = WebGPUShader.typeSize[type]? 
+                  WebGPUShader.typeSize[type]: 
+                  {type: '', components: 0, size: 0};
+            const lastData = array[array.length - 1];
+            const offset = array.length ? 
+                  lastData.offset + lastData.components * lastData.size
+                  : 0;
+            array.push({
+                  name: name,
+                  type: typeInfo.type as GPUVertexFormat,
+                  components: typeInfo.components,
+                  size: typeInfo.size,
+                  bindingLocation: bindingLocation,
+                  offset: offset,
+                  stride: 0,
+                  normalize: false,
+                  dataType: type,
+                  numberOfComponents: typeInfo.components,
+            });
+      }
+
 
       static setTypes(){
             this.types = [];
@@ -37,6 +72,18 @@ export class WebGPUShader extends Model.Shader {
             this.types[this.INT] = 'i32';
             this.types[this.FLOAT] = 'f32';
             this.types[this.BOOL] = 'bool';
+
+            this.typeSize[this.VEC4] = {type: 'float32x4', components: 4, size: 4};
+            this.typeSize[this.VEC3] = {type: 'float32x3', components: 3, size: 4};
+            this.typeSize[this.VEC2] = {type: 'float32x2', components: 2, size: 4};
+
+            this.typeSize[this.INT] = {type: 'sint32', components: 1, size: 4};
+            this.typeSize[this.FLOAT] = {type: 'float32', components: 1, size: 4};
+            //uniforms => type is patched
+            this.typeSize[this.MAT4x4] = {type: 'float32x4', components: 16, size: 4};
+            this.typeSize[this.MAT3x3] = {type: 'float32x4', components: 9, size: 4};
+            this.typeSize[this.MAT2x2] = {type: 'float32x4', components: 4, size: 4};
+            this.typeSize[this.MAT3x2] = {type: 'float32x4', components: 6, size: 4};
       }
 
       protected resetVariables(): this {
@@ -57,6 +104,8 @@ export class WebGPUShader extends Model.Shader {
 
             this.fragmentReturnedValue = '';
             this.vertexReturnedValue = '';
+
+            this._attributesData = [];
 
             return this;
       }
@@ -94,6 +143,17 @@ export class WebGPUShader extends Model.Shader {
             }
             `
       }
+      protected getPositionTransformations(): string {
+            const transformations =  this.positionTransformations.length? 
+                  this.positionTransformations.reduce((prev, next)=> `${prev} * ${next}`) + ' *' : '';
+            const code = this.varyings.length? 
+                  `
+                  ${this.vertexReturnedValue}.position = ${transformations} ${this.vertexReturnedValue}.position;
+                  return ${this.vertexReturnedValue};
+                  `: 
+                  `return ${transformations} ${this.vertexReturnedValue};`;
+            return code;
+      }
 
 
       protected getVertex(): string {
@@ -104,14 +164,14 @@ export class WebGPUShader extends Model.Shader {
             ${this.getUniformsDefinition()}
             ${this.getVaryingsDefinition()}
             ${this.getAttributesDefinition()}
-            ${this.bindings.reduce((prev, next)=> `${prev}\n${next}`)}
+            ${this.bindings.length > 0? this.bindings.reduce((prev, next)=> `${prev}\n${next}`) : ''}
             @vertex
             fn vertex_shader(${this.vInput})->${
                   this.varyings.length ? 
                   this.VARYING_STRUCT:
                   '@builtin(position) vec4f'}{
                   ${code}
-                  return ${this.vertexReturnedValue};
+                  ${this.getPositionTransformations()}
             }
             `;
       }
@@ -130,12 +190,17 @@ export class WebGPUShader extends Model.Shader {
 
 
       protected addAttribute(name: string, type: number): this {
+
+            this.addInfo( this._attributesData, name, type, this.attributeBindingLocation );
+
             this.vInput = `${this.ATTRIBUTES_VARIABLE}: ${this.ATTRIBUTES_STRUCT}`;
             this.attributes.push(`@location(${this.attributeBindingLocation}) ${name}: ${this.getType(type)},`);
             this.attributeBindingLocation++;
             return this;
       }
       protected addUniform(name: string, type: number): this {
+            this.addInfo( this._uniformsData, name, type, 0 );
+
             this.uniforms.push(`${name}: ${this.getType(type)},`);
             return this;
       }
@@ -152,27 +217,41 @@ export class WebGPUShader extends Model.Shader {
       }
 
 
-
+      useDynamicElement(): this {
+            this.positionTransformations.push(`${this.UNIFORMS_VARIABLE}.transformation`);
+            this.addUniform('transformation', WebGPUShader.MAT4x4);
+            return this;
+      }
+      usePerspective(): this {
+            this.positionTransformations.push(`${this.UNIFORMS_VARIABLE}.perspective`);
+            this.addUniform('perspective', WebGPUShader.MAT4x4);
+            return this;
+      }
       useAnimation2D(): this {
+
+            if( this.varyings.join().indexOf('texture_coords') < 0 ){
+                  console.warn('cannot use 2d animation in a non-textured element');
+                  return this;
+            }
+
             this
             .useTexture()
             .addUniform('frame_position', WebGPUShader.VEC2);
 
             this.fCode.push(`
-            ${this.VARYING_VARIABLE}.texture.x += ${this.UNIFORMS_VARIABLE}.frame_position.x;
-            ${this.VARYING_VARIABLE}.texture.y += ${this.UNIFORMS_VARIABLE}.frame_position.y; 
+            ${this.VARYING_VARIABLE}.texture_coords.x += ${this.UNIFORMS_VARIABLE}.frame_position.x;
+            ${this.VARYING_VARIABLE}.texture_coords.y += ${this.UNIFORMS_VARIABLE}.frame_position.y; 
             `);
             return this;
       }
-
       useTexture(): this {
-            this.resetVariables()
+
+            this
+            .resetVariables()
             .addAttribute('vertex_position', WebGPUShader.VEC3)
             .addAttribute('texture_coords', WebGPUShader.VEC2)
             .addBinding('texture_sampler', WebGPUShader.SAMPLER)
             .addBinding('texture', WebGPUShader.TEXTURE2D)
-            .addUniform('transformation', WebGPUShader.MAT4x4)
-            .addUniform('prospective', WebGPUShader.MAT4x4)
             .addVarying('texture_coords', WebGPUShader.VEC2);
 
             this.vCode.push(`
@@ -185,10 +264,12 @@ export class WebGPUShader extends Model.Shader {
             return this;
       }
       useInterpolatedColor(): this {
-            this.resetVariables();
-            this.addAttribute('vertex_position', WebGPUShader.VEC3);
-            this.addUniform('transformation', WebGPUShader.MAT4x4);
-            this.addUniform('prospective', WebGPUShader.MAT4x4);
+            this
+            .resetVariables()
+            .addAttribute('vertex_position', WebGPUShader.VEC3)
+            .addAttribute('color', WebGPUShader.VEC4)
+            .addVarying('color', WebGPUShader.VEC4);
+            
             this.vCode.push(`
                   var out: ${this.VARYING_STRUCT};
                   out.position = ${this.DEFAULT_VERTEX_RETURNED_VALUE};
@@ -199,17 +280,27 @@ export class WebGPUShader extends Model.Shader {
             return this;
       }
       useUniformColor(r: number, g: number, b: number, a: number = 1): this {
-            this.resetVariables()
-            .addAttribute('vertex_position', WebGPUShader.VEC3)
-            .addUniform('prospective', WebGPUShader.MAT4x4)
-            .addUniform('transformation', WebGPUShader.MAT4x4);
-            this.vertexReturnedValue = this.DEFAULT_VERTEX_RETURNED_VALUE;
+
+            this
+            .resetVariables()
+            .addAttribute('vertex_position', WebGPUShader.VEC3);
+
+            this.vCode.push(`
+            var out = ${this.DEFAULT_VERTEX_RETURNED_VALUE};
+            `);
+
+            this.vertexReturnedValue = 'out';
             this.fragmentReturnedValue = `vec4f(${r}, ${g}, ${b}, ${a})`;
             return this;
       }
       useDisplacementMap(): this {
+
+            if( this.attributes.join().indexOf('texture_coords') < 0 ){
+                  console.warn('cannot use displacement map in a non-textured element');
+                  return this;
+            }
+
             this
-            .useTexture()
             .addBinding('displacement_map', WebGPUShader.TEXTURE2D)
             .addUniform('bump_scale', WebGPUShader.FLOAT);
             this.vCode.push(`

@@ -1,7 +1,7 @@
 import * as Type from './rendererModel.js';
 
 import { WebGLRenderer } from "./glRenderer.js";
-import { ViewDelegate } from "./viewMatrix.js";
+import { ViewDelegate } from "./matrix/viewMatrix.js";
 import { ProgramAttributes } from "./programAttributes.js";
 import { DrawOpt } from "./generics.js";
 
@@ -146,7 +146,7 @@ export class RendererDelegate extends WebGLRenderer {
             
                   programAttributes.setMatrices(
                         this.viewDelegate.getTransformationMatrix(opt),
-                        this.viewDelegate.prospectiveMatrix,
+                        this.viewDelegate.perspectiveMatrix,
                         opt?.animationVector
                   );
             

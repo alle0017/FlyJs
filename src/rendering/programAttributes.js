@@ -11,10 +11,10 @@ export class ProgramAttributes {
         // Data for attributes and uniforms
         this.attributes = [];
         this.uniforms = [];
-        // Index for animation, transform, and prospective uniforms
+        // Index for animation, transform, and perspective uniforms
         this.animation = -1;
         this.transform = 0;
-        this.prospective = 1;
+        this.perspective = 1;
         this.getProgramAttributes(opt);
         this.fragment = this.fragmentShader.get();
         this.vertex = this.vertexShader.get();
@@ -64,13 +64,13 @@ export class ProgramAttributes {
             data: new Float32Array(opt.vertices),
             numberOfComponents: 3
         });
-        this.uniforms.push(this.renderer.createUniform(WebGLShaders.U_TRANSFORM, this.renderer.MAT4), this.renderer.createUniform(WebGLShaders.U_PROSPECTIVE, this.renderer.MAT4));
+        this.uniforms.push(this.renderer.createUniform(WebGLShaders.U_TRANSFORM, this.renderer.MAT4), this.renderer.createUniform(WebGLShaders.U_perspective, this.renderer.MAT4));
         this.setImageAttributes(opt);
         this.setUniformColorAttributes(opt);
     }
-    setMatrices(transform, prospective, animationVector) {
+    setMatrices(transform, perspective, animationVector) {
         this.uniforms[this.transform].value = transform;
-        this.uniforms[this.prospective].value = prospective;
+        this.uniforms[this.perspective].value = perspective;
         if (this.animation >= 0) {
             this.uniforms[this.animation].value = animationVector || [0, 0];
         }

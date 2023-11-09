@@ -1,4 +1,4 @@
-import { Point, Axis, AxisType } from "./generics.js";
+import { Point, Axis, AxisType } from "../generics.js";
 import { Matrix } from "./matrices.js";
 
 /**

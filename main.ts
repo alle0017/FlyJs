@@ -1,7 +1,8 @@
-import { Camera } from './rendering/camera.js';
+import { Camera } from './rendering/matrix/camera.js';
 import { Sprite2D } from './entities/sprite2d.js';
 import { Game } from './controller/game.js';
-import { WebGLShader } from './rendering/prova/GLShaders.js';
+import { WebGPUShader } from './rendering/prova/GPUShader.js';
+import { WebGPURenderer } from './rendering/prova/GPURenderer.js';
 /*
 async function main(){
 
@@ -42,12 +43,46 @@ console.log(
       game.loop();
 }
 main();*/
-const shader = 
-new WebGLShader()
-.useDisplacementMap()
-.get()
-console.log(
-      shader.vertex
-      +'\n'+
-      shader.fragment
-);
+const r = await WebGPURenderer.new( document.getElementById('gl') as HTMLCanvasElement );
+const shaderInfo = new WebGPUShader();
+shaderInfo
+.useInterpolatedColor()
+.usePerspective()
+.useDynamicElement();
+console.log(shaderInfo.get().vertex + shaderInfo.get().fragment)
+for(let el of shaderInfo.attributesData){
+      if( el.name === 'color' )
+            el.data = [ 
+                  1, 0, 1, 1,
+                  1, 1, 0, 1,
+                  0, 1, 1, 1,
+            ]
+      else if( el.name === 'vertex_position' ){
+            el.data = [
+                  0.1, 0.1, 0,
+                  0.7, 0.7, 0,
+                  0.1, 0.7, 0,
+            ]
+      }
+}
+for(let el of shaderInfo.uniformsData){
+      if( el.name === 'transformation' )
+            el.data = [ 
+                  1, 0, 0, 0,
+                  0, 1, 0, 0,
+                  0, 0, 1, 0,
+                  0, 0, 0, 1,
+            ]
+      else if( el.name === 'perspective' ){
+            el.data = [ 
+                  1, 0, 0, 0,
+                  0, 1, 0, 0,
+                  0, 0, 1, 0,
+                  0, 0, 0, 1,
+            ]
+      }
+}
+const fn = r.setup( shaderInfo, [ 0, 1, 2 ] );
+if(fn){
+      fn();
+}

@@ -1,5 +1,5 @@
 import { Point, DrawOpt, Axis } from '../rendering/generics.js'
-import { Matrix } from '../rendering/matrices.js';
+import { Matrix } from '../rendering/matrix/matrices.js';
 
 /**
  * An abstract class representing an entity in 3D space.

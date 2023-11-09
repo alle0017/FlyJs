@@ -1,4 +1,4 @@
-import { DrawOpt, Axis } from "./generics.js";
+import { DrawOpt, Axis } from "../generics.js";
 import { Matrix } from './matrices.js'
 
   
@@ -10,12 +10,12 @@ export class ViewDelegate {
       private _fieldOfView: number = 60;  
 
 
-      prospectiveMatrix: number[] = [];
+      perspectiveMatrix: number[] = [];
 
       set zNear(zNear: number) {
             if (this._near === zNear) return;
             this._near = zNear;
-            this.updateProspectiveMatrix();
+            this.updateperspectiveMatrix();
       }
 
       get zNear() {
@@ -25,7 +25,7 @@ export class ViewDelegate {
       set zFar(zFar: number) {
             if (this._far === zFar) return;
             this._far = zFar;
-            this.updateProspectiveMatrix();
+            this.updateperspectiveMatrix();
       }
 
       get zFar(): number {
@@ -35,7 +35,7 @@ export class ViewDelegate {
       set fieldOfView(angle: number) {
             if (this._fieldOfView === angle) return;
             this._fieldOfView = angle;
-            this.updateProspectiveMatrix();
+            this.updateperspectiveMatrix();
       }
 
       get fieldOfView(): number {
@@ -44,12 +44,12 @@ export class ViewDelegate {
 
       constructor(private _resolution: number) {
             // Update the perspective matrix based on initial camera properties
-            this.updateProspectiveMatrix();
+            this.updateperspectiveMatrix();
       }
       
-      private updateProspectiveMatrix() {
+      private updateperspectiveMatrix() {
             // Calculate and assign a new perspective matrix based on camera properties
-            this.prospectiveMatrix = Matrix.prospective(this._fieldOfView, this._resolution, this._near, this._far);
+            this.perspectiveMatrix = Matrix.perspective(this._fieldOfView, this._resolution, this._near, this._far);
       }
 
       private selectTranslationMatrix(opt: DrawOpt): number[] | null{

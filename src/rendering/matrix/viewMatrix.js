@@ -1,5 +1,5 @@
-import { Axis } from "./generics.js";
-import { Matrix } from './matrix/matrices.js';
+import { Axis } from "../generics.js";
+import { Matrix } from './matrices.js';
 export class ViewDelegate {
     set zNear(zNear) {
         if (this._near === zNear)

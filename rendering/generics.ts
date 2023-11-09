@@ -1,4 +1,4 @@
-import { Camera } from "./camera.js";
+import { Camera } from "./matrix/camera.js";
 /**
  * @enums with the type of axis (X, Y, Z)
  */

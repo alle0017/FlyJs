@@ -1,4 +1,4 @@
-import { Axis, } from "./generics.js";
+import { Axis, } from "../generics.js";
 export var Matrix;
 (function (Matrix) {
     /**

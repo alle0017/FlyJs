@@ -1,7 +1,30 @@
 {
       "cSpell.words": [
+            "bgra",
+            "bikeshed",
             "highp",
+            "localizable",
             "lowp",
-            "MEDIUMP"
+            "MEDIUMP",
+            "multisampled",
+            "onuncapturederror",
+            "plinss",
+            "POSTV",
+            "renderable",
+            "subresource",
+            "subresources",
+            "tabatkins",
+            "ufloat",
+            "Uncaptured",
+            "uncapturederror",
+            "unclipped",
+            "unconfigure",
+            "unmap",
+            "Unmaps",
+            "webgpu",
+            "WGSL",
+            "widlparser",
+            "workgroups",
+            "writability"
       ]
 }

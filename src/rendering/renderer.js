@@ -1,5 +1,5 @@
 import { WebGLRenderer } from "./glRenderer.js";
-import { ViewDelegate } from "./viewMatrix.js";
+import { ViewDelegate } from "./matrix/viewMatrix.js";
 import { ProgramAttributes } from "./programAttributes.js";
 export class RendererDelegate extends WebGLRenderer {
     constructor(cvs) {
@@ -90,7 +90,7 @@ export class RendererDelegate extends WebGLRenderer {
             this.bindAttributeBuffers(programAttributes.attributes);
             // Bind the indices buffer
             this.bindBuffer(indexBuffer);
-            programAttributes.setMatrices(this.viewDelegate.getTransformationMatrix(opt), this.viewDelegate.prospectiveMatrix, opt === null || opt === void 0 ? void 0 : opt.animationVector);
+            programAttributes.setMatrices(this.viewDelegate.getTransformationMatrix(opt), this.viewDelegate.perspectiveMatrix, opt === null || opt === void 0 ? void 0 : opt.animationVector);
             // Bind uniforms for rendering
             this.bindUniforms(programAttributes.uniforms);
             // Draw elements
