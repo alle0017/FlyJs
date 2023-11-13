@@ -1,4 +1,5 @@
 import * as Model from './shaderModel.js';
+import { AttributesName as AN, UniformsName as UN } from './shaderModel.js';
 export class WebGLShader extends Model.Shader {
     constructor() {
         super(...arguments);
@@ -110,24 +111,24 @@ export class WebGLShader extends Model.Shader {
         return this;
     }
     usePerspective() {
-        this.positionTransformations.push('perspective');
-        this.addUniform('perspective', WebGLShader.MAT4x4, WebGLShader.VERTEX);
+        this.positionTransformations.push(UN.perspective);
+        this.addUniform(UN.perspective, WebGLShader.MAT4x4, WebGLShader.VERTEX);
         return this;
     }
     useDynamicElement() {
-        this.positionTransformations.push('transformation');
-        this.addUniform('transformation', WebGLShader.MAT4x4, WebGLShader.VERTEX);
+        this.positionTransformations.push(UN.transformation);
+        this.addUniform(UN.transformation, WebGLShader.MAT4x4, WebGLShader.VERTEX);
         return this;
     }
     useAnimation2D() {
-        if (this.attributes.join().indexOf('texture_coords') < 0) {
+        if (this.attributes.join().indexOf(AN.textureCoordinates) < 0) {
             console.warn('cannot use 2d animations in a non-textured element');
             return this;
         }
-        this.addUniform('animation_frame', WebGLShader.VEC2, WebGLShader.VERTEX);
+        this.addUniform(UN.framePosition, WebGLShader.VEC2, WebGLShader.VERTEX);
         this.vCode.push(`
-                  texture_coords.x += animation_frame.x;
-                  texture_coords.y += animation_frame.y;
+                  texture_coords.x += ${UN.framePosition}.x;
+                  texture_coords.y += ${UN.framePosition}.y;
             `);
         return this;
     }
@@ -135,48 +136,48 @@ export class WebGLShader extends Model.Shader {
         this
             .resetVariables()
             .addUniform('texture', WebGLShader.TEXTURE2D, WebGLShader.FRAGMENT)
-            .addAttribute('position', WebGLShader.VEC3)
-            .addAttribute('texture_coords', WebGLShader.VEC4)
+            .addAttribute(AN.vertex, WebGLShader.VEC3)
+            .addAttribute(AN.textureCoordinates, WebGLShader.VEC4)
             .addVarying('v_text_coords', WebGLShader.VEC4);
         this.vCode.push(`
-                  v_text_coords = texture_coords;
+                  v_text_coords = ${AN.textureCoordinates};
             `);
-        this.vertexReturnedValue = 'vec4(position, 1)';
+        this.vertexReturnedValue = `vec4(${AN.vertex}, 1)`;
         this.fragmentReturnedValue = `texture2D( texture, v_text_coords )`;
         return this;
     }
     useInterpolatedColor() {
         this
             .resetVariables()
-            .addAttribute('position', WebGLShader.VEC3)
-            .addAttribute('color', WebGLShader.VEC4)
+            .addAttribute(AN.vertex, WebGLShader.VEC3)
+            .addAttribute(AN.color, WebGLShader.VEC4)
             .addVarying('v_color', WebGLShader.VEC4);
         this.vCode.push(`
-                  v_color = color;
+                  v_color = ${AN.color};
             `);
-        this.vertexReturnedValue = 'vec4(position, 1)';
+        this.vertexReturnedValue = `vec4(${AN.vertex}, 1)`;
         this.fragmentReturnedValue = `v_color`;
         return this;
     }
     useUniformColor(r, g, b, a = 1) {
         this
             .resetVariables()
-            .addAttribute('position', WebGLShader.VEC3);
-        this.vertexReturnedValue = 'vec4(position, 1)';
+            .addAttribute(AN.vertex, WebGLShader.VEC3);
+        this.vertexReturnedValue = `vec4(${AN.vertex}, 1)`;
         this.fragmentReturnedValue = `vec4(${r}, ${g}, ${b}, ${a})`;
         return this;
     }
     useDisplacementMap() {
-        if (this.attributes.join().indexOf('texture_coords') < 0) {
+        if (this.attributes.join().indexOf(AN.textureCoordinates) < 0) {
             console.warn('cannot use displacement map in a non-textured element');
             return this;
         }
         this
             .addUniform('displacement_map', WebGLShader.TEXTURE2D, WebGLShader.VERTEX)
-            .addUniform('bump_scale', WebGLShader.FLOAT, WebGLShader.VERTEX);
+            .addUniform(UN.bumpScale, WebGLShader.FLOAT, WebGLShader.VERTEX);
         this.vCode.push(`
-                  float height = texture2D( displacement_map, texture_coords );
-                  position.y += height * bump_scale; 
+                  float height = texture2D( displacement_map, ${AN.textureCoordinates} );
+                  position.y += height * ${UN.bumpScale}; 
             `);
         return this;
     }

@@ -1,0 +1,208 @@
+import * as Types from "./generics.js";
+import * as Model from "./rendererModel.js";
+export class WebGPU extends Model.Renderer {
+    get antialias() {
+        return this._antialias === 4;
+    }
+    set antialias(value) {
+        if (value)
+            this._antialias = 4;
+        else
+            this._antialias = 1;
+    }
+    constructor(cvs) {
+        super();
+        this.cvs = cvs;
+        this._culling = false;
+        this._antialias = 4;
+        this.ctx = this.cvs.getContext('webgpu');
+        if (!this.ctx)
+            this.error('context', Types.RendererErrorType.acquisition);
+        if (!navigator.gpu)
+            throw 'webgpu not enabled';
+    }
+    async init() {
+        var _a;
+        this.adapter = await ((_a = navigator.gpu) === null || _a === void 0 ? void 0 : _a.requestAdapter());
+        if (!this.adapter) {
+            this.error('adapter', Types.RendererErrorType.acquisition);
+        }
+        this.device = await this.adapter.requestDevice();
+        this.canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+        this.depthTexture = this.createTexture('depth24plus');
+        this.ctx.configure({
+            device: this.device,
+            format: this.canvasFormat,
+            alphaMode: 'opaque'
+        });
+        this.renderTarget = this.createTexture(this.canvasFormat);
+        return this;
+    }
+    getPrimitive(primitive) {
+        switch (primitive) {
+            case Types.Primitives.lines: return 'line-list';
+            case Types.Primitives.lines_strip: return 'line-strip';
+            case Types.Primitives.triangles: return 'triangle-list';
+            case Types.Primitives.triangles_strip: return 'triangle-strip';
+            default: return 'point-list';
+        }
+    }
+    createBufferData(buffer) {
+        const format = buffer.components > 1 ?
+            `${buffer.dataType}x${buffer.components}`
+            : buffer.dataType;
+        return {
+            shaderLocation: buffer.shaderLocation,
+            format: format,
+            offset: buffer.offset
+        };
+    }
+    /**
+     *
+     * @param buffers generic buffer data
+     * @param stride total length of the struct (also bytes)
+     */
+    vertexAttributeDescription(buffers, stride) {
+        const attributes = [];
+        for (let el of buffers)
+            attributes.push(this.createBufferData(el));
+        return {
+            arrayStride: stride,
+            attributes,
+            stepMode: 'vertex',
+        };
+    }
+    bufferDescription(arrayByteLength, usage, label = 'buffer', mapped = false) {
+        return {
+            label: label,
+            size: (arrayByteLength + 3) & ~3,
+            usage: usage | GPUBufferUsage.COPY_DST,
+            mappedAtCreation: mapped,
+        };
+    }
+    mapBuffer(buffer, data) {
+        new (Object.getPrototypeOf(data).constructor)(buffer.getMappedRange()).set(data);
+        buffer.unmap();
+    }
+    createTexture(format) {
+        var _a;
+        const texture = (_a = this.device) === null || _a === void 0 ? void 0 : _a.createTexture({
+            size: [this.cvs.width, this.cvs.height, 1],
+            format,
+            sampleCount: this._antialias,
+            usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+        if (!texture)
+            this.error(`texture ${format}`, Types.RendererErrorType.creation);
+        return texture;
+    }
+    pipelineDescription(opt) {
+        const shaderModule = this.createShader(opt.vShader + opt.fShader);
+        const description = {
+            vertex: {
+                module: shaderModule,
+                entryPoint: opt.vEntryPoint || 'vertex_shader',
+                buffers: [this.vertexAttributeDescription(opt.buffers, opt.stride)],
+            },
+            fragment: {
+                module: shaderModule,
+                entryPoint: opt.fEntryPoint || 'fragment_shader',
+                targets: [{
+                        format: this.canvasFormat
+                    }]
+            },
+            primitive: {
+                topology: this.getPrimitive(opt.topology || Types.Primitives.triangles),
+                cullMode: (this._culling ? 'back' : 'none'),
+            },
+            layout: 'auto',
+            multisample: {
+                count: this._antialias
+            }
+        };
+        if (opt.enableDepth) {
+            return Object.assign(Object.assign({}, description), { depthStencil: {
+                    depthWriteEnabled: true,
+                    depthCompare: 'less',
+                    format: 'depth24plus',
+                } });
+        }
+        return description;
+    }
+    setRenderPassDescriptorView(renderPassDescriptor, enableDepth = true) {
+        var _a;
+        /*if( enableDepth && renderPassDescriptor.depthStencilAttachment )
+              renderPassDescriptor.depthStencilAttachment.view = this.depthTexture?.createView() as GPUTextureView;*/
+        if (this._antialias === 1) {
+            renderPassDescriptor.colorAttachments[0].view = this.ctx.getCurrentTexture().createView();
+            return renderPassDescriptor;
+        }
+        renderPassDescriptor.colorAttachments[0].view = (_a = this.renderTarget) === null || _a === void 0 ? void 0 : _a.createView();
+        renderPassDescriptor.colorAttachments[0].resolveTarget = this.ctx.getCurrentTexture().createView();
+        return renderPassDescriptor;
+    }
+    createRenderPassDescriptor(enableDepth) {
+        var _a, _b;
+        const description = {
+            colorAttachments: [{
+                    view: this.ctx.getCurrentTexture().createView(),
+                    clearValue: { r: 0.5, g: 0.5, b: 0.5, a: 1 },
+                    loadOp: 'load',
+                    storeOp: 'store'
+                }],
+        };
+        if (this._antialias == 4) {
+            description.colorAttachments[0].view = (_a = this.renderTarget) === null || _a === void 0 ? void 0 : _a.createView();
+            description.colorAttachments[0].resolveTarget = this.ctx.getCurrentTexture().createView();
+        }
+        if (enableDepth)
+            return Object.assign(Object.assign({}, description), { depthStencilAttachment: {
+                    view: (_b = this.depthTexture) === null || _b === void 0 ? void 0 : _b.createView(),
+                    depthClearValue: 1.0,
+                    depthLoadOp: 'clear',
+                    depthStoreOp: "store",
+                } });
+        return description;
+    }
+    createBindGroup() {
+    }
+    createBuffer(opt) {
+        var _a;
+        let length = 0;
+        let mapped = false;
+        let constructor = Float32Array;
+        if (!opt.data && !opt.arrayByteLength) {
+            throw `Buffer cannot be created. Missing data property or dataByteLength property`;
+        }
+        if (opt.arrayByteLength)
+            length = opt.arrayByteLength;
+        else if (opt.data) {
+            mapped = true;
+            constructor = this.getTypedArrayInitializer(opt.dataType || Types.BufferDataType.float32);
+            length = opt.data.length * constructor.BYTES_PER_ELEMENT;
+        }
+        const descriptor = this.bufferDescription(length, opt.usage || (GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST), opt.label || 'buffer', mapped);
+        const buffer = (_a = this.device) === null || _a === void 0 ? void 0 : _a.createBuffer(descriptor);
+        if (!buffer)
+            this.error('buffer', Types.RendererErrorType.creation);
+        if (opt.data) {
+            this.mapBuffer(buffer, new constructor(opt.data));
+        }
+        return buffer;
+    }
+    createPipeline(opt) {
+        var _a;
+        const pipelineDescription = this.pipelineDescription(opt);
+        const pipeline = (_a = this.device) === null || _a === void 0 ? void 0 : _a.createRenderPipeline(pipelineDescription);
+        if (!pipeline)
+            this.error('pipeline', Types.RendererErrorType.creation);
+        return pipeline;
+    }
+    createShader(srcCode) {
+        var _a;
+        const shader = (_a = this.device) === null || _a === void 0 ? void 0 : _a.createShaderModule({ code: srcCode });
+        if (!shader)
+            this.error('shader', Types.RendererErrorType.creation);
+        return shader;
+    }
+}

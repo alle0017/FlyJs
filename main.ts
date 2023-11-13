@@ -1,88 +1,62 @@
-import { Camera } from './rendering/matrix/camera.js';
-import { Sprite2D } from './entities/sprite2d.js';
-import { Game } from './controller/game.js';
-import { WebGPUShader } from './rendering/prova/GPUShader.js';
-import { WebGPURenderer } from './rendering/prova/GPURenderer.js';
-/*
-async function main(){
-
-
-console.log(
-      new WebGlShader(WebGlShader.FRAGMENT)
-      .setFragmentShaderForTexture()
-      .get()
-      );
+import { Renderer } from './rendering/prova/GPUrenderer.js';
+import { Shapes } from './rendering/prova/shapes.js';
+const r = new Renderer(
+      document.getElementById('gl') as HTMLCanvasElement
+);
+await r.init();
+const color =  [
       
-      console.log(new WebGlShader(WebGlShader.VERTEX)
-      .setVertexShaderForTexture()
-      .get()
-      );
-      const camera = new Camera();
-      const map = new Map();
-      const game = Game.getInstance();
+      1.0, 0.0, 0.0, 1.0, // Front face: white
+      1.0, 0.0, 0.0, 1.0,
+      1.0, 0.0, 0.0, 1.0,
+      1.0, 0.0, 0.0, 1.0,
 
-      map.set('ArrowUp', ()=>camera.y += 0.1);
-      map.set('ArrowDown', ()=>camera.y -= 1);
-      map.set('ArrowLeft', ()=>camera.x -= 1);
-      map.set('ArrowRight', ()=>camera.x += 1);
-      window.addEventListener('keydown', (e)=> {
-            if(map.has(e.code))
-                  map.get(e.code)()
-      })
-      const sprite = new Sprite2D(game, {
-            img: 'prova.png',
-            camera: camera,
-            position: {x: 0, y: 0, z: -10},
-            frames: 4,
-            costumes: 4,
-      })
-      function anim(){
-            sprite.animate();
+      1.0, 0.0, 0.0, 1.0, // Back face: red
+      1.0, 0.0, 0.0, 1.0,
+      1.0, 0.0, 0.0, 1.0,
+      1.0, 0.0, 0.0, 1.0,
+
+      0.0, 1.0, 0.0, 1.0, // Top face: green
+      0.0, 1.0, 0.0, 1.0,
+      0.0, 1.0, 0.0, 1.0,
+      0.0, 1.0, 0.0, 1.0,
+
+      0.0, 0.0, 1.0, 1.0, // Bottom face: blue
+      0.0, 0.0, 1.0, 1.0,
+      0.0, 0.0, 1.0, 1.0,
+      0.0, 0.0, 1.0, 1.0,
+
+      1.0, 1.0, 0.0, 1.0, // Right face: yellow
+      1.0, 1.0, 0.0, 1.0,
+      1.0, 1.0, 0.0, 1.0,
+      1.0, 1.0, 0.0, 1.0,
+
+      1.0, 0.0, 1.0, 1.0, 
+      1.0, 0.0, 1.0, 1.0, 
+      1.0, 0.0, 1.0, 1.0, 
+      1.0, 0.0, 1.0, 1.0, 
+]
+const obj1 = r.create({
+      ...Shapes.rectangle( 0.1, 0.13 ),
+      color,
+      static: true
+})
+const obj2 = r.create({
+      ...Shapes.triangle(),
+      color: [
+            0, 1, 1, 1,
+            1, 1, 0, 1,
+            0.5, 0.1, 1, 1, 
+      ],
+      static: true
+})
+if( obj1 && obj2 ){
+      r.append( obj1 );
+      r.append( obj2 );
+      const f = ()=>{
+            r.draw();
+            requestAnimationFrame(f)
       }
-      game.functions.push(anim);
-      game.loop();
+      f();
 }
-main();*/
-const r = await WebGPURenderer.new( document.getElementById('gl') as HTMLCanvasElement );
-const shaderInfo = new WebGPUShader();
-shaderInfo
-.useInterpolatedColor()
-.usePerspective()
-.useDynamicElement();
-console.log(shaderInfo.get().vertex + shaderInfo.get().fragment)
-for(let el of shaderInfo.attributesData){
-      if( el.name === 'color' )
-            el.data = [ 
-                  1, 0, 1, 1,
-                  1, 1, 0, 1,
-                  0, 1, 1, 1,
-            ]
-      else if( el.name === 'vertex_position' ){
-            el.data = [
-                  0.1, 0.1, 0,
-                  0.7, 0.7, 0,
-                  0.1, 0.7, 0,
-            ]
-      }
-}
-for(let el of shaderInfo.uniformsData){
-      if( el.name === 'transformation' )
-            el.data = [ 
-                  1, 0, 0, 0,
-                  0, 1, 0, 0,
-                  0, 0, 1, 0,
-                  0, 0, 0, 1,
-            ]
-      else if( el.name === 'perspective' ){
-            el.data = [ 
-                  1, 0, 0, 0,
-                  0, 1, 0, 0,
-                  0, 0, 1, 0,
-                  0, 0, 0, 1,
-            ]
-      }
-}
-const fn = r.setup( shaderInfo, [ 0, 1, 2 ] );
-if(fn){
-      fn();
-}
+      

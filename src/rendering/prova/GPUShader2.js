@@ -1,5 +1,5 @@
-import * as Model from './shaderModel.js';
-import { AttributesName as AN, UniformsName as UN } from './shaderModel.js';
+import * as Model from './shaderModel2.js';
+import { AttributesName as AN, UniformsName as UN } from './shaderModel2.js';
 class WebGPUShader extends Model.Shader {
     constructor() {
         super(...arguments);
@@ -25,14 +25,12 @@ class WebGPUShader extends Model.Shader {
             WebGPUShader.typeSize[type] :
             { type: '', components: 0, size: 0 };
         this._attributesData.set(name, {
-            type: typeInfo.type,
-            size: typeInfo.size,
-            bindingLocation: bindingLocation,
-            offset: this.attribOffset,
-            stride: 0,
-            normalize: false,
-            dataType: type,
+            dataType: typeInfo.type,
+            shaderLocation: bindingLocation,
             components: typeInfo.components,
+            offset: this.attribOffset,
+            name,
+            size: typeInfo.size
         });
         this.attribOffset += typeInfo.components * typeInfo.size;
     }
@@ -41,14 +39,12 @@ class WebGPUShader extends Model.Shader {
             WebGPUShader.typeSize[type] :
             { type: '', components: 0, size: 0 };
         this._uniformsData.set(name, {
-            type: typeInfo.type,
-            size: typeInfo.size,
-            bindingLocation: bindingLocation,
-            offset: this.uniformOffset,
-            stride: 0,
-            normalize: false,
-            dataType: type,
+            dataType: typeInfo.type,
+            shaderLocation: bindingLocation,
             components: typeInfo.components,
+            offset: this.uniformOffset,
+            name,
+            size: typeInfo.size
         });
         this.uniformOffset += typeInfo.components * typeInfo.size;
     }
@@ -66,16 +62,16 @@ class WebGPUShader extends Model.Shader {
         this.types[this.INT] = 'i32';
         this.types[this.FLOAT] = 'f32';
         this.types[this.BOOL] = 'bool';
-        this.typeSize[this.VEC4] = { type: 'float32x4', components: 4, size: 4 };
-        this.typeSize[this.VEC3] = { type: 'float32x3', components: 3, size: 4 };
-        this.typeSize[this.VEC2] = { type: 'float32x2', components: 2, size: 4 };
+        this.typeSize[this.VEC4] = { type: 'float32', components: 4, size: 4 };
+        this.typeSize[this.VEC3] = { type: 'float32', components: 3, size: 4 };
+        this.typeSize[this.VEC2] = { type: 'float32', components: 2, size: 4 };
         this.typeSize[this.INT] = { type: 'sint32', components: 1, size: 4 };
         this.typeSize[this.FLOAT] = { type: 'float32', components: 1, size: 4 };
         //uniforms => type is patched
-        this.typeSize[this.MAT4x4] = { type: 'float32x4', components: 16, size: 4 };
-        this.typeSize[this.MAT3x3] = { type: 'float32x4', components: 9, size: 4 };
-        this.typeSize[this.MAT2x2] = { type: 'float32x4', components: 4, size: 4 };
-        this.typeSize[this.MAT3x2] = { type: 'float32x4', components: 6, size: 4 };
+        this.typeSize[this.MAT4x4] = { type: 'float32', components: 16, size: 4 };
+        this.typeSize[this.MAT3x3] = { type: 'float32', components: 9, size: 4 };
+        this.typeSize[this.MAT2x2] = { type: 'float32', components: 4, size: 4 };
+        this.typeSize[this.MAT3x2] = { type: 'float32', components: 6, size: 4 };
     }
     resetVariables() {
         this.uniforms = [];
@@ -189,6 +185,7 @@ class WebGPUShader extends Model.Shader {
         return this;
     }
     addBinding(name, type) {
+        this.addUniformInfo(name, type, this.groupBindingLocation);
         this.bindings.push(`@group(0) @binding(${this.groupBindingLocation}) var ${name}: ${this.getType(type)};`);
         this.groupBindingLocation++;
         return this;
@@ -278,6 +275,8 @@ class WebGPUShader extends Model.Shader {
         return {
             vertex: this.getVertex(),
             fragment: this.getFragment(),
+            attributes: this._attributesData,
+            attributeStride: this.attribOffset,
         };
     }
 }

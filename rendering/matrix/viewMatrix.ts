@@ -1,4 +1,4 @@
-import { DrawOpt, Axis } from "../generics.js";
+import { DrawOpt, Axis } from "../prova/generics.js";
 import { Matrix } from './matrices.js'
 
   
@@ -15,7 +15,7 @@ export class ViewDelegate {
       set zNear(zNear: number) {
             if (this._near === zNear) return;
             this._near = zNear;
-            this.updateperspectiveMatrix();
+            this.updatePerspectiveMatrix();
       }
 
       get zNear() {
@@ -25,7 +25,7 @@ export class ViewDelegate {
       set zFar(zFar: number) {
             if (this._far === zFar) return;
             this._far = zFar;
-            this.updateperspectiveMatrix();
+            this.updatePerspectiveMatrix();
       }
 
       get zFar(): number {
@@ -35,7 +35,7 @@ export class ViewDelegate {
       set fieldOfView(angle: number) {
             if (this._fieldOfView === angle) return;
             this._fieldOfView = angle;
-            this.updateperspectiveMatrix();
+            this.updatePerspectiveMatrix();
       }
 
       get fieldOfView(): number {
@@ -44,10 +44,10 @@ export class ViewDelegate {
 
       constructor(private _resolution: number) {
             // Update the perspective matrix based on initial camera properties
-            this.updateperspectiveMatrix();
+            this.updatePerspectiveMatrix();
       }
       
-      private updateperspectiveMatrix() {
+      private updatePerspectiveMatrix() {
             // Calculate and assign a new perspective matrix based on camera properties
             this.perspectiveMatrix = Matrix.perspective(this._fieldOfView, this._resolution, this._near, this._far);
       }
