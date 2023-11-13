@@ -18,19 +18,19 @@ this engine is intended to be more like a library, very lightweight, without the
 this material is intended to be the absolute starting point for the once that have never touched rendering before. i will collect all the material that I'm currently using to study here.
 
 ## WebGL
-[-WebGL Fundamentals](https://webglfundamentals.org/)
-[-Mozilla docs](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Getting_started_with_WebGL)
+[-WebGL Fundamentals](https://webglfundamentals.org/)\
+[-Mozilla docs](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Getting_started_with_WebGL)\
 
 ## WebGPU
-[-WebGPU Step By Step](https://github.com/jack1232/WebGPU-Step-By-Step)
-[-Raw WebGPU](https://alain.xyz/blog/raw-webgpu)
-[-code labs google tutorial](https://codelabs.developers.google.com/your-first-webgpu-app#6)
-[-Mozilla docs](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API)
-[-WebGPU Fundamentals](https://webgpufundamentals.org/)
+[-WebGPU Step By Step](https://github.com/jack1232/WebGPU-Step-By-Step)\
+[-Raw WebGPU](https://alain.xyz/blog/raw-webgpu)\
+[-code labs google tutorial](https://codelabs.developers.google.com/your-first-webgpu-app#6)\
+[-Mozilla docs](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API)\
+[-WebGPU Fundamentals](https://webgpufundamentals.org/)\
 
 ## VARIOUS RENDERING TECHNIQUES
 
-[-Skeletal Animation](https://veeenu.github.io/blog/implementing-skeletal-animation/)
-[-WebGPU API for C++](https://eliemichel.github.io/LearnWebGPU/introduction.html)
-[-WebGPU for Metal developers](https://metalbyexample.com/webgpu-part-two/)
-[-Render grass](https://www.youtube.com/watch?v=bp7REZBV4P4&t=401s)
+[-Skeletal Animation](https://veeenu.github.io/blog/implementing-skeletal-animation/)\
+[-WebGPU API for C++](https://eliemichel.github.io/LearnWebGPU/introduction.html)\
+[-WebGPU for Metal developers](https://metalbyexample.com/webgpu-part-two/)\
+[-Render grass](https://www.youtube.com/watch?v=bp7REZBV4P4&t=401s)\
