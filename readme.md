@@ -8,12 +8,14 @@ this engine is intended to be more like a library, very lightweight, without the
 
 ## NEXT STEPS
 
-- [ ] webgpu texture
-- [ ] webgpu uniforms
-- [ ] re-implement the WebGL renderer
+- [ ] webgpu texture (on going)
+- [ ] webgpu uniforms (on going)
+- [ ] webgl texture (on going)
+- [ ] webgl uniforms (on going)
+- [x] re-implement the WebGL renderer 
 - [ ] implement lights 
 - [ ] implement skeletal animations
-- [ ] implement a fallback system with possibility of require specific api for the renderer
+- [ ] implement a fallback system with possibility of require specific api for the renderer (on going)
 
 ## MATERIAL FOR GETTING STARTED 
 
