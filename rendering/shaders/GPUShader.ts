@@ -2,12 +2,6 @@ import * as Model from './shaderModel.js';
 import { AttributesName as AN, UniformsName as UN } from './shaderModel.js';
 
 
-type TypeInfos = {
-      type: GPUVertexFormat;
-      components: number;
-      size: number;
-}
-
 export class WebGPUShader extends Model.Shader {
       
       private vInput: string = '';
@@ -26,8 +20,6 @@ export class WebGPUShader extends Model.Shader {
       private readonly ATTRIBUTES_VARIABLE: string = 'vInput';
       private readonly VARYING_VARIABLE: string = 'fInput';
       private readonly DEFAULT_VERTEX_RETURNED_VALUE: string = `vec4f(${this.ATTRIBUTES_VARIABLE}.${AN.vertex}, 1)`;
-
-      private static typeSize: TypeInfos[] = [];
 
       bindingsInfo: [] = [];
 

@@ -15,6 +15,15 @@ export abstract class Renderer {
                   return Uint16Array;
             return Float32Array;
       }
+      protected getPrimitivesVertexCount( primitive: Primitives ): number {
+            switch( primitive ){
+                  case Primitives.lines: return 2;
+                  case Primitives.lines_strip: return 2;
+                  case Primitives.triangles: return 3;
+                  case Primitives.triangles_strip: return 3;
+                  default: return 1;
+            }
+      }
       protected abstract getPrimitive( primitive: Primitives ): any;
       protected abstract getBufferUsage( bufferUsage: BufferUsage ): number;
       protected abstract createBufferData( arg: BufferData ): any;

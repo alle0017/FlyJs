@@ -66,7 +66,7 @@ export class WebGL extends Model.Renderer {
             }
             this.gl.shaderSource( shader , code );
             this.gl.compileShader( shader );
-            if( !this.gl.getShaderInfoLog( shader ) ){
+            if( this.gl.getShaderInfoLog( shader ) ){
                   this.error( `shader (code: ${code})`, Types.RendererErrorType.initialization );
             }
             return shader;
@@ -82,9 +82,10 @@ export class WebGL extends Model.Renderer {
             this.gl.attachShader( program, vShader );
             this.gl.attachShader( program, fShader);
             
-            if( !this.gl.getProgramInfoLog( program ) ){
+            if( this.gl.getProgramInfoLog( program ) ){
                   this.error( 'program', Types.RendererErrorType.creation );
             }
+            this.gl.linkProgram( program );
             return program;
       }
 }

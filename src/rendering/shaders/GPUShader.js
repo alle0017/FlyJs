@@ -1,6 +1,6 @@
-import * as Model from './shaderModel2.js';
-import { AttributesName as AN, UniformsName as UN } from './shaderModel2.js';
-class WebGPUShader extends Model.Shader {
+import * as Model from './shaderModel.js';
+import { AttributesName as AN, UniformsName as UN } from './shaderModel.js';
+export class WebGPUShader extends Model.Shader {
     constructor() {
         super(...arguments);
         this.vInput = '';
@@ -280,6 +280,4 @@ class WebGPUShader extends Model.Shader {
         };
     }
 }
-WebGPUShader.typeSize = [];
-export { WebGPUShader };
 WebGPUShader.setTypes();

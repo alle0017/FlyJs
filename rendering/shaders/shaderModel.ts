@@ -19,6 +19,11 @@ export enum UniformsName {
       bumpScale = 'bump_scale',
       framePosition = 'frame_position'
 }
+export type TypeInfos = {
+      type: GPUVertexFormat;
+      components: number;
+      size: number;
+}
 
 export abstract class Shader {
       static readonly FRAGMENT = 0;
@@ -57,6 +62,8 @@ export abstract class Shader {
 
       protected _attributesData: Map<string,Types.BufferData> = new Map<string,Types.BufferData>();
       protected _uniformsData: Map<string,Types.BufferData> = new Map<string,Types.BufferData>();
+
+      protected static typeSize: TypeInfos[] = [];
 
       constructor(){}     
 

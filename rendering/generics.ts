@@ -1,4 +1,4 @@
-import { Camera } from "../matrix/camera.js";
+import { Camera } from "./matrix/camera.js";
 
 type DrawableElementOptions = {
       color: number[];

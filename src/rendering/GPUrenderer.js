@@ -25,9 +25,10 @@ export class Renderer extends WebGPU {
             dataType: Types.BufferDataType.float32,
             label: 'vertex buffer',
         });
+        const count = this.getPrimitivesVertexCount(Types.Primitives.triangles);
         if (!opt.indices) {
             opt.indices = [];
-            for (let i = 0; i < opt.vertices.length / 3; i++)
+            for (let i = 0; i < opt.vertices.length / count; i++)
                 opt.indices.push(i);
         }
         const N_OF_VERTICES = opt.indices.length;

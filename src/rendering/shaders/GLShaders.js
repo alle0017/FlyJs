@@ -17,6 +17,16 @@ export class WebGLShader extends Model.Shader {
         this.types[WebGLShader.INT] = 'int';
         this.types[WebGLShader.FLOAT] = 'float';
         this.types[WebGLShader.BOOL] = 'bool';
+        this.typeSize[this.VEC4] = { type: 'float32', components: 4, size: 4 };
+        this.typeSize[this.VEC3] = { type: 'float32', components: 3, size: 4 };
+        this.typeSize[this.VEC2] = { type: 'float32', components: 2, size: 4 };
+        this.typeSize[this.INT] = { type: 'sint32', components: 1, size: 4 };
+        this.typeSize[this.FLOAT] = { type: 'float32', components: 1, size: 4 };
+        //uniforms => type is patched
+        this.typeSize[this.MAT4x4] = { type: 'float32', components: 16, size: 4 };
+        this.typeSize[this.MAT3x3] = { type: 'float32', components: 9, size: 4 };
+        this.typeSize[this.MAT2x2] = { type: 'float32', components: 4, size: 4 };
+        this.typeSize[this.MAT3x2] = { type: 'float32', components: 6, size: 4 };
     }
     getType(type) {
         if (!WebGLShader.types[type])
@@ -33,7 +43,22 @@ export class WebGLShader extends Model.Shader {
         this.fCode = [];
         this.fragmentReturnedValue = '';
         this.vertexReturnedValue = '';
+        this._attributesData.clear();
+        this._uniformsData.clear();
         return this;
+    }
+    addAttributesData(name, type) {
+        const typeInfo = WebGLShader.typeSize[type];
+        if (!type)
+            return;
+        this._attributesData.set(name, {
+            dataType: typeInfo.type,
+            shaderLocation: 0,
+            components: typeInfo.components,
+            offset: 0,
+            name,
+            size: typeInfo.size
+        });
     }
     getFragment() {
         const code = this.fCode.length ?
@@ -94,6 +119,7 @@ export class WebGLShader extends Model.Shader {
         return '';
     }
     addAttribute(name, type) {
+        this.addAttributesData(name, type);
         this.attributes.push(`attribute ${this.getType(type)} ${name};`);
         return this;
     }

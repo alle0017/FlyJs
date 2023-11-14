@@ -1,5 +1,5 @@
-import { Renderer } from './rendering/prova/GPUrenderer.js';
-import { Shapes } from './rendering/prova/shapes.js';
+import { Renderer } from './rendering/GLRenderer.js';
+import { Shapes } from './rendering/shapes.js';
 const r = new Renderer(
       document.getElementById('gl') as HTMLCanvasElement
 );

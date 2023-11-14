@@ -1,4 +1,4 @@
-import { Point, Axis, AxisType } from "../generics.js";
+import { Point3D, Axis } from "../generics.js";
 import { Matrix } from "./matrices.js";
 
 /**
@@ -14,7 +14,7 @@ export class Camera {
       /**
        * Axis of rotation for the camera.
        */
-      rotationAxis: AxisType = Axis.X;
+      rotationAxis: Axis = Axis.X;
   
       /**
        * Camera's rotation angle in degrees.
@@ -24,7 +24,7 @@ export class Camera {
       /**
        * Camera's position in 3D space.
        */
-      private _cameraPosition: Point = { x: 0, y: 0, z: 0 };
+      private _cameraPosition: Point3D = { x: 0, y: 0, z: 0 };
   
       /**
        * Set the rotation angle of the camera.
@@ -48,7 +48,7 @@ export class Camera {
        * Set the position of the camera in 3D space.
        * @param {Point} point - The new position of the camera.
        */
-      set position(point: Point) {
+      set position( point: Point3D ) {
             if (
                   this._cameraPosition.x === point.x &&
                   this._cameraPosition.y === point.y &&
@@ -62,7 +62,7 @@ export class Camera {
        * Get the position of the camera in 3D space.
        * @returns {Point} - The position of the camera.
        */
-      get position(): Point {
+      get position(): Point3D {
             return this._cameraPosition;
       }
   
@@ -70,7 +70,7 @@ export class Camera {
        * Set the x-coordinate of the camera's position.
        * @param {number} x - The new x-coordinate.
        */
-      set x(x: number) {
+      set x( x: number ) {
             if (x === this._cameraPosition.x) return;
             this._cameraPosition.x = x;
             this.updateCameraMatrix();

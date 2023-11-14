@@ -1,4 +1,4 @@
-import { Axis } from "../prova/generics.js";
+import { Axis } from "../generics.js";
 import { Matrix } from './matrices.js';
 export class ViewDelegate {
     set zNear(zNear) {

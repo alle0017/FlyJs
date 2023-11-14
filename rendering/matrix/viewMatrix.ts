@@ -1,4 +1,4 @@
-import { DrawOpt, Axis } from "../prova/generics.js";
+import { DrawOpt, Axis } from "../generics.js";
 import { Matrix } from './matrices.js'
 
   

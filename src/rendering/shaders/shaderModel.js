@@ -40,4 +40,5 @@ Shader.BOOL = 9;
 Shader.TEXTURE2D = 8;
 Shader.SAMPLER = 11;
 Shader.types = [];
+Shader.typeSize = [];
 export { Shader };

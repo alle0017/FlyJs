@@ -1,4 +1,4 @@
-import { Axis, AxisType, Point, } from "../generics.js";
+import { Axis, Point3D, } from "../generics.js";
 export namespace Matrix {
       /**
       * Generates a 4x4 rotation matrix.
@@ -7,7 +7,7 @@ export namespace Matrix {
       * @param {boolean} toRad - Whether the input angle is in radians (default is true).
       * @returns {number[]} - The 4x4 rotation matrix.
       */
-      export function rotation(angle: number, axis: AxisType, toRad: boolean = true): number[] {
+      export function rotation(angle: number, axis: Axis, toRad: boolean = true): number[] {
             if(toRad) angle = degToRad(angle);
             const c = Math.cos(angle);
             const s = Math.sin(angle);
@@ -39,7 +39,7 @@ export namespace Matrix {
       * @param {Point} point - Translation values in the x, y, and z directions.
       * @returns {number[]} - The 4x4 translation matrix.
       */
-      export function translate(point: Point){
+      export function translate(point: Point3D){
             return [
                   1, 0, 0, 0,
                   0, 1, 0, 0,
@@ -52,7 +52,7 @@ export namespace Matrix {
       * @param {number | Point} scale - Scaling factor or scaling values in the x, y, and z directions.
       * @returns {number[]} - The 4x4 scale matrix.
       */
-      export function scale(scale: number | Point): number[]{
+      export function scale(scale: number | Point3D): number[]{
             if(typeof scale === 'number'){
                   return [
                         scale, 0, 0, 0,
