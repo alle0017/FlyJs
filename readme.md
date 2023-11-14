@@ -22,11 +22,28 @@ this material is intended to be the absolute starting point for the once that ha
 
 ## INDEX
 - [how it works](#how-it-works)
+- [buffers](#buffers)
+- [shaders](#shaders)
 - [rendering pipeline](#rendering-pipeline)
+- [WebGL documentation](#webgl)
+- [WebGPU documentation](#webgpu)
 
 ## HOW IT WORKS
 
-the fist step is to understand how webgl and webgpu works. Either the api's are very different from each other, in fact, webgl works as linear as possible, making it very easy to understand for beginners. in the other hand, webgpu use the rendering pipeline, that optimize the rendering phase a lot, but make it more difficult to understand, for the once who comes from an high level language, such as javascript.
+the fist step is to understand how webgl and webgpu works. Either the api's are very different from each other, in fact, webgl works as linear as possible, making it very easy to understand for beginners. in the other hand, webgpu use the rendering pipeline, that optimize the rendering phase a lot, but makes it more difficult to understand, for the once who comes from an high level language, such as javascript. let's start with the general concepts.
+
+
+### BUFFERS
+
+Also in "traditional programming", the only methods of sharing resources between processes/programs is to use buffers. Generically, they are only region of memory (like arrays) that you can access (with pointers, a primitive data type of low level languages, that can refers to cells of memory) and take data from it. in rendering, they are used basically for all the exchanges of data, but, practically, the once more interesting are:
+-index buffer;
+-vertex buffer;
+-uniform buffer;
+ 
+#### index buffer 
+ this type of buffer is unique for each program and, basically, say how the vertex buffer must be read. for example, suppose we have a 3-array [5,6,7] and suppose we have an index buffer that contains [0,2,1]. Normally, the array will be read as 5,6,7 in order; With the index buffer the order changes and the new sequence will be [5,7,6]. this is very useful, because, if you have a cube, you will normally have a vertex buffer of size 6 (2 triangles of 3 vertex each with 3 components each) for each face (6) for a total of 108 values: You can use an index buffer to reduce this number to 4 (number of vertices of a square with 3 components each) times 6 = 72 and an index buffer of 36 values ( initial values divided by 3 ) for a total of 108 values. So 108 = 108, why do we use index buffer? two reasons: first, normally, index buffer is composed of 16 bit sized unsigned int, while vertex by 32 bits floats, for a total of 360 bytes with index buffer usage and 432 bytes without. Second, not always the index buffer usage produces the same number of data of the other case, but we can say that it's use can reduce the number of data, increasing the speed of execution.
+
+### SHADERS
 
 ### RENDERING PIPELINE
 
