@@ -1,7 +1,8 @@
 import * as Types from './generics.js';
-import * as Model from './shaderModel2.js';
-import { WebGPUShader as GPU } from './GPUShader2.js';
-import { AttributesName as AN, UniformsName as UN } from './shaderModel2.js';
+import * as Model from './shaders/shaderModel.js';
+import { WebGPUShader as GPU } from './shaders/GPUShader.js';
+import { WebGLShader as GL } from './shaders/GLShaders.js';
+import { AttributesName as AN, UniformsName as UN } from './shaders/shaderModel.js';
 
 
 
@@ -57,9 +58,9 @@ export class ProgramSetterDelegate {
             }
             return buffer;
       }
-      static getProperties( data: Types.DrawableElementAttributes, mode: number, unifyBuffer: boolean = true ){
-            const infos = new GPU;
-            const attributes: Map<string, number[]> = new Map<string, number[]>;
+      static getProperties( data: Types.DrawableElementAttributes, mode: Types.ProgramMode, unifyBuffer: boolean = true ): Types.GPUCodeProperties {
+            const infos = mode === Types.ProgramMode.webgpu? new GPU(): new GL();
+            const attributes: Map<string, number[]> = new Map<string, number[]>();
             //const uniforms: Map<string, number[]> = new Map<string, number[]>;
             this.elaborateData( data, attributes, infos );
             attributes.set( AN.vertex, data.vertices );

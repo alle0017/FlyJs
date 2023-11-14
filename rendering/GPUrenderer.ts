@@ -1,7 +1,6 @@
-import { WebGPU } from "./GPUcode.js";
+import { WebGPU } from "./codeDelegates/GPUcode.js";
 import { ProgramSetterDelegate, } from "./programSetterDelegate.js";
 import * as Types from './generics.js';
-
 
 export class Renderer extends WebGPU { 
 
@@ -42,7 +41,7 @@ export class Renderer extends WebGPU {
                   data: opt.indices,
                   dataType: Types.BufferDataType.uint16,
                   label: 'index buffer',
-                  usage: GPUBufferUsage.INDEX
+                  usage: Types.BufferUsage.index
             });
             return ( pass: GPURenderPassEncoder )=>{
 

@@ -209,8 +209,10 @@ export class WebGLShader extends Model.Shader {
 
             return this;
       }
-      get(): Model.ShaderCode {
+      get(): Model.ProgramInfo {
             return {
+                  attributes: this._attributesData,
+                  attributeStride: 0,
                   vertex: this.getVertex(),
                   fragment: this.getFragment(),
             }

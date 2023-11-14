@@ -1,5 +1,7 @@
-import { WebGPUShader as GPU } from './GPUShader2.js';
-import { AttributesName as AN } from './shaderModel2.js';
+import * as Types from './generics.js';
+import { WebGPUShader as GPU } from './shaders/GPUShader.js';
+import { WebGLShader as GL } from './shaders/GLShaders.js';
+import { AttributesName as AN } from './shaders/shaderModel.js';
 export class ProgramSetterDelegate {
     constructor() { }
     static elaborateData(data, attributes, 
@@ -49,8 +51,8 @@ export class ProgramSetterDelegate {
         return buffer;
     }
     static getProperties(data, mode, unifyBuffer = true) {
-        const infos = new GPU;
-        const attributes = new Map;
+        const infos = mode === Types.ProgramMode.webgpu ? new GPU() : new GL();
+        const attributes = new Map();
         //const uniforms: Map<string, number[]> = new Map<string, number[]>;
         this.elaborateData(data, attributes, infos);
         attributes.set(AN.vertex, data.vertices);

@@ -1,3 +1,8 @@
+export var BufferUsage;
+(function (BufferUsage) {
+    BufferUsage[BufferUsage["vertex"] = 0] = "vertex";
+    BufferUsage[BufferUsage["index"] = 1] = "index";
+})(BufferUsage || (BufferUsage = {}));
 export var Axis;
 (function (Axis) {
     Axis["X"] = "x";

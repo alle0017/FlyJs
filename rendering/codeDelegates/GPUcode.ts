@@ -1,5 +1,5 @@
-import * as Types from "./generics.js";
-import * as Model from "./rendererModel.js";
+import * as Types from "../generics.js";
+import * as Model from "../rendererModel.js";
 
 
 export class WebGPU extends Model.Renderer {
@@ -63,6 +63,12 @@ export class WebGPU extends Model.Renderer {
                   case Types.Primitives.triangles: return 'triangle-list';
                   case Types.Primitives.triangles_strip: return 'triangle-strip';
                   default: return 'point-list';
+            }
+      }
+      protected getBufferUsage(bufferUsage: Types.BufferUsage): number {
+            switch( bufferUsage ) {
+                  case Types.BufferUsage.vertex: return GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST;
+                  case Types.BufferUsage.index: return GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST;
             }
       }
       protected createBufferData( buffer: Types.BufferData ): GPUVertexAttribute {
@@ -204,7 +210,7 @@ export class WebGPU extends Model.Renderer {
             }
             const descriptor = this.bufferDescription(
                   length,
-                  opt.usage || ( GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST ),
+                  this.getBufferUsage(opt.usage || Types.BufferUsage.vertex),
                   opt.label || 'buffer',
                   mapped
             );

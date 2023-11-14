@@ -1,5 +1,5 @@
-import * as Model from './shaderModel2.js';
-import { AttributesName as AN, UniformsName as UN } from './shaderModel2.js';
+import * as Model from './shaderModel.js';
+import { AttributesName as AN, UniformsName as UN } from './shaderModel.js';
 
 
 type TypeInfos = {

@@ -1,5 +1,5 @@
-import * as Model from "./rendererModel.js";
-import * as Types from './generics.js'
+import * as Model from "../rendererModel.js";
+import * as Types from '../generics.js'
 
 export type ProgramInfo = { 
       fragment: string; 

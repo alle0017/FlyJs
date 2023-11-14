@@ -1,5 +1,5 @@
-import * as Types from "./generics.js";
-import * as Model from "./rendererModel.js";
+import * as Types from "../generics.js";
+import * as Model from "../rendererModel.js";
 export class WebGPU extends Model.Renderer {
     get antialias() {
         return this._antialias === 4;
