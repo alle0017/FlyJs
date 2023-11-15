@@ -1,7 +1,15 @@
-import * as Types from "../generics.js";
+import * as Types from "../types.js";
 import * as Model from "../rendererModel.js";
 
-
+export type Resources = {
+      location: number,
+      buffer?: GPUBuffer,
+      texture?: GPUSampler | GPUTextureView | GPUExternalTexture
+}
+export type BindGroupOpt = {
+      pipeline: GPURenderPipeline,
+      buffers: Resources[]
+}
 export class WebGPU extends Model.Renderer {
 
       device?: GPUDevice;
@@ -15,6 +23,11 @@ export class WebGPU extends Model.Renderer {
       protected _culling: boolean = false;
 
       private _antialias: number = 4;
+
+      get culling(): boolean { return this._culling; }
+      set culling( value: boolean ) {
+            this._culling = value;
+      }
 
       get antialias(): boolean {
             return this._antialias === 4;
@@ -65,10 +78,11 @@ export class WebGPU extends Model.Renderer {
                   default: return 'point-list';
             }
       }
-      protected getBufferUsage(bufferUsage: Types.BufferUsage): number {
+      protected getBufferUsage( bufferUsage: Types.BufferUsage ): number {
             switch( bufferUsage ) {
                   case Types.BufferUsage.vertex: return GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST;
                   case Types.BufferUsage.index: return GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST;
+                  case Types.BufferUsage.uniform: return GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
             }
       }
       protected createBufferData( buffer: Types.BufferData ): GPUVertexAttribute {
@@ -80,6 +94,36 @@ export class WebGPU extends Model.Renderer {
                   format: format as GPUVertexFormat,
                   offset: buffer.offset
             }
+      }
+      protected createEntriesDescription( buffers: Resources[] ){
+            const entries: GPUBindGroupEntry[] = [];
+            for( let el of buffers ){
+                  let resource;
+                  if( el.texture instanceof GPUTexture ){
+                        resource = (el.texture as GPUTexture ).createView();
+                  }else if( el.texture instanceof GPUExternalTexture || el.texture instanceof GPUSampler ){
+                        resource = el.texture;
+                 } else if( el.buffer ){
+                        resource = { buffer: el.buffer };
+                  }else{
+                        this.error( 'bind group', Types.RendererErrorType.creation )
+                  }
+                  entries.push({
+                        binding: el.location,
+                        resource: resource as GPUBindingResource
+                  })
+            }
+            return entries;
+      }
+      protected createUniformBindingGroup( opt: BindGroupOpt ): GPUBindGroup {
+            const entries = this.createEntriesDescription( opt.buffers );
+            const bindGroup = this.device?.createBindGroup({
+                  layout: opt.pipeline.getBindGroupLayout(0),
+                  entries
+            });
+            if( !bindGroup )
+                  this.error( 'bind group', Types.RendererErrorType.creation );
+            return bindGroup as GPUBindGroup
       }
       /**
        * 
@@ -170,8 +214,8 @@ export class WebGPU extends Model.Renderer {
             const description: GPURenderPassDescriptor = {
                   colorAttachments: [{
                         view: this.ctx.getCurrentTexture().createView(),
-                        clearValue: { r: 0.5, g: 0.5, b: 0.5, a: 1 }, //background color
-                        loadOp: 'load',
+                        clearValue: { r: 0, g: 0, b: 0, a: 1 }, //background color
+                        loadOp: 'clear',
                         storeOp: 'store'
                   }],
             };
@@ -191,15 +235,12 @@ export class WebGPU extends Model.Renderer {
                   }
             return description;
       }
-      protected createBindGroup( ){
-
-      }
       protected createBuffer( opt: Partial<Types.BufferOpt> ): GPUBuffer {
             let length: number = 0;
             let mapped = false;
             let constructor: Types.TypedArrayConstructor = Float32Array;
             if( !opt.data && !opt.arrayByteLength ){
-                  throw `Buffer cannot be created. Missing data property or dataByteLength property`;
+                  throw `Buffer cannot be created. Missing data property or arrayByteLength property`;
             }
             if( opt.arrayByteLength )
                   length = opt.arrayByteLength;
@@ -236,5 +277,8 @@ export class WebGPU extends Model.Renderer {
             if( !shader )
                   this.error( 'shader', Types.RendererErrorType.creation );
             return shader as GPUShaderModule;
+      }
+      enableCulling(){
+
       }
 }

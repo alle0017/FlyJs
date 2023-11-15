@@ -1,4 +1,4 @@
-import { Point3D, Axis } from "../generics.js";
+import { Point3D, Axis } from "../types.js";
 import { Matrix } from "./matrices.js";
 
 /**

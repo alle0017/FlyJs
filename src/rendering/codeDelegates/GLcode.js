@@ -1,4 +1,4 @@
-import * as Types from '../generics.js';
+import * as Types from '../types.js';
 import * as Model from '../rendererModel.js';
 export class WebGL extends Model.Renderer {
     get antialias() {
@@ -33,6 +33,7 @@ export class WebGL extends Model.Renderer {
     getBufferUsage(bufferUsage) {
         switch (bufferUsage) {
             case Types.BufferUsage.vertex: return this.gl.ARRAY_BUFFER;
+            case Types.BufferUsage.uniform: return this.gl.ARRAY_BUFFER;
             case Types.BufferUsage.index: return this.gl.ELEMENT_ARRAY_BUFFER;
         }
     }

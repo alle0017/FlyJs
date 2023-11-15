@@ -1,4 +1,4 @@
-import { DrawOpt, Axis } from "../generics.js";
+import { DrawOpt, Axis, ProgramMode } from "../types.js";
 import { Matrix } from './matrices.js'
 
   
@@ -83,7 +83,7 @@ export class ViewDelegate {
             return null;
       }
 
-      getTransformationMatrix(opt?: DrawOpt): number[] {
+      getTransformationMatrix( opt?: DrawOpt ): number[] {
             let transformationMatrix = Matrix.IDENTITY_4X4;
             
             // If no drawing options provided, return the identity matrix

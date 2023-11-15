@@ -1,4 +1,4 @@
-import * as Types from './generics.js';
+import * as Types from './types.js';
 import * as Model from './shaders/shaderModel.js';
 import { WebGPUShader as GPU } from './shaders/GPUShader.js';
 import { WebGLShader as GL } from './shaders/GLShaders.js';

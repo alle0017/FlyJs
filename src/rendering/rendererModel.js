@@ -1,4 +1,4 @@
-import { BufferDataType, Primitives, } from "./generics.js";
+import { BufferDataType, Primitives, } from "./types.js";
 export class Renderer {
     getTypedArrayInitializer(type) {
         if (type === BufferDataType.uint16)

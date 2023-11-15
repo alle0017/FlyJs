@@ -1,11 +1,12 @@
-import * as Model from "../rendererModel.js";
-import * as Types from '../generics.js'
+import * as Types from '../types.js'
 
 export type ProgramInfo = { 
       fragment: string; 
       vertex: string; 
       attributes: Map<string, Types.BufferData>;
+      uniforms: Map<string, Types.BufferData>;
       attributeStride: number;
+      uniformStride: number;
 };
 
 export enum AttributesName {

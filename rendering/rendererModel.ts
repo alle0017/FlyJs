@@ -6,7 +6,7 @@ import {
       Primitives, 
       BufferData, 
       BufferUsage,
-} from "./generics.js";
+} from "./types.js";
 
 export abstract class Renderer {
       abstract antialias: boolean;

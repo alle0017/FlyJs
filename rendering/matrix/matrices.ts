@@ -1,4 +1,4 @@
-import { Axis, Point3D, } from "../generics.js";
+import { Axis, Point3D, } from "../types.js";
 export namespace Matrix {
       /**
       * Generates a 4x4 rotation matrix.

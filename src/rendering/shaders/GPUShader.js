@@ -276,7 +276,9 @@ export class WebGPUShader extends Model.Shader {
             vertex: this.getVertex(),
             fragment: this.getFragment(),
             attributes: this._attributesData,
+            uniforms: this._uniformsData,
             attributeStride: this.attribOffset,
+            uniformStride: this.uniformOffset,
         };
     }
 }

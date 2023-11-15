@@ -1,4 +1,4 @@
-import { Axis } from "../generics.js";
+import { Axis } from "../types.js";
 import { Matrix } from './matrices.js';
 export class ViewDelegate {
     set zNear(zNear) {

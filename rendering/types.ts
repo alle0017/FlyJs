@@ -15,6 +15,7 @@ type DrawableElementEssential = {
 export enum BufferUsage {
       vertex,
       index,
+      uniform,
 }
 export enum Axis  {
       X = 'x',
@@ -137,7 +138,7 @@ export type ProgramOpt = {
       stride: number,
 }
 
-export type RenderFunction = (( arg0: GPURenderPassEncoder )=>void) | (()=>void);
+export type RenderFunction = (( arg0: DrawOpt, arg1: GPURenderPassEncoder )=>void) | (()=>void);
 
 export type TypedArray = Float32Array | Uint16Array;
 
@@ -153,5 +154,11 @@ export type GPUCodeProperties = {
       fragment: string;
       vertex: string;
       attributes: Map<string,BufferData>;
+      uniforms: Map<string,BufferData>;
       attributeStride: number;
+      uniformStride: number;
   }
+  export type Renderable = {
+      attributes: DrawOpt,
+      function: RenderFunction,
+}

@@ -1,6 +1,10 @@
-import * as Types from "../generics.js";
+import * as Types from "../types.js";
 import * as Model from "../rendererModel.js";
 export class WebGPU extends Model.Renderer {
+    get culling() { return this._culling; }
+    set culling(value) {
+        this._culling = value;
+    }
     get antialias() {
         return this._antialias === 4;
     }
@@ -51,6 +55,7 @@ export class WebGPU extends Model.Renderer {
         switch (bufferUsage) {
             case Types.BufferUsage.vertex: return GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST;
             case Types.BufferUsage.index: return GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST;
+            case Types.BufferUsage.uniform: return GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
         }
     }
     createBufferData(buffer) {
@@ -62,6 +67,40 @@ export class WebGPU extends Model.Renderer {
             format: format,
             offset: buffer.offset
         };
+    }
+    createEntriesDescription(buffers) {
+        const entries = [];
+        for (let el of buffers) {
+            let resource;
+            if (el.texture instanceof GPUTexture) {
+                resource = el.texture.createView();
+            }
+            else if (el.texture instanceof GPUExternalTexture || el.texture instanceof GPUSampler) {
+                resource = el.texture;
+            }
+            else if (el.buffer) {
+                resource = { buffer: el.buffer };
+            }
+            else {
+                this.error('bind group', Types.RendererErrorType.creation);
+            }
+            entries.push({
+                binding: el.location,
+                resource: resource
+            });
+        }
+        return entries;
+    }
+    createUniformBindingGroup(opt) {
+        var _a;
+        const entries = this.createEntriesDescription(opt.buffers);
+        const bindGroup = (_a = this.device) === null || _a === void 0 ? void 0 : _a.createBindGroup({
+            layout: opt.pipeline.getBindGroupLayout(0),
+            entries
+        });
+        if (!bindGroup)
+            this.error('bind group', Types.RendererErrorType.creation);
+        return bindGroup;
     }
     /**
      *
@@ -152,8 +191,8 @@ export class WebGPU extends Model.Renderer {
         const description = {
             colorAttachments: [{
                     view: this.ctx.getCurrentTexture().createView(),
-                    clearValue: { r: 0.5, g: 0.5, b: 0.5, a: 1 },
-                    loadOp: 'load',
+                    clearValue: { r: 0, g: 0, b: 0, a: 1 },
+                    loadOp: 'clear',
                     storeOp: 'store'
                 }],
         };
@@ -170,15 +209,13 @@ export class WebGPU extends Model.Renderer {
                 } });
         return description;
     }
-    createBindGroup() {
-    }
     createBuffer(opt) {
         var _a;
         let length = 0;
         let mapped = false;
         let constructor = Float32Array;
         if (!opt.data && !opt.arrayByteLength) {
-            throw `Buffer cannot be created. Missing data property or dataByteLength property`;
+            throw `Buffer cannot be created. Missing data property or arrayByteLength property`;
         }
         if (opt.arrayByteLength)
             length = opt.arrayByteLength;
@@ -210,5 +247,7 @@ export class WebGPU extends Model.Renderer {
         if (!shader)
             this.error('shader', Types.RendererErrorType.creation);
         return shader;
+    }
+    enableCulling() {
     }
 }

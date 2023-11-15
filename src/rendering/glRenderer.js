@@ -1,5 +1,5 @@
 import { WebGL } from './codeDelegates/GLcode.js';
-import { ProgramMode, BufferDataType, BufferUsage, Primitives, RendererErrorType } from './generics.js';
+import { ProgramMode, BufferDataType, BufferUsage, Primitives, RendererErrorType } from './types.js';
 import { ProgramSetterDelegate, } from "./programSetterDelegate.js";
 export class Renderer extends WebGL {
     constructor() {

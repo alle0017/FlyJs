@@ -1,4 +1,4 @@
-import { ShapesProperties, Point3D, Point2D } from "./generics.js"
+import { ShapesProperties, Point3D, Point2D } from "./types.js"
 
 export namespace Shapes {
 

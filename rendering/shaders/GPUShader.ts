@@ -45,7 +45,7 @@ export class WebGPUShader extends Model.Shader {
       }
 
       protected addUniformInfo( name: string, type: number, bindingLocation: number ): void {
-
+            
             const typeInfo = WebGPUShader.typeSize[type]? 
                   WebGPUShader.typeSize[type]: 
                   {type: '', components: 0, size: 0};
@@ -209,6 +209,7 @@ export class WebGPUShader extends Model.Shader {
             return this;
       }
       protected addUniform(name: string, type: number): this {
+
             this.addUniformInfo( name, type, 0 );
 
             this.uniforms.push(`${name}: ${this.getType(type)},`);
@@ -326,7 +327,9 @@ export class WebGPUShader extends Model.Shader {
                   vertex: this.getVertex(),
                   fragment: this.getFragment(),
                   attributes: this._attributesData,
+                  uniforms: this._uniformsData,
                   attributeStride: this.attribOffset,
+                  uniformStride: this.uniformOffset,
             }
       }
 }

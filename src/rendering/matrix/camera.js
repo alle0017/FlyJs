@@ -1,4 +1,4 @@
-import { Axis } from "../generics.js";
+import { Axis } from "../types.js";
 import { Matrix } from "./matrices.js";
 /**
  * Represents a camera in a 3D scene.
