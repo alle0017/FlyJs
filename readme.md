@@ -45,6 +45,51 @@ Also in "traditional programming", the only methods of sharing resources between
 #### index buffer 
  this type of buffer is unique for each program and, basically, say how the vertex buffer must be read. for example, suppose we have a 3-array [5,6,7] and suppose we have an index buffer that contains [0,2,1]. Normally, the array will be read as 5,6,7 in order; With the index buffer the order changes and the new sequence will be [5,7,6]. this is very useful, because, if you have a cube, you will normally have a vertex buffer of size 6 (2 triangles of 3 vertex each with 3 components each) for each face (6) for a total of 108 values: You can use an index buffer to reduce this number to 4 (number of vertices of a square with 3 components each) times 6 = 72 and an index buffer of 36 values ( initial values divided by 3 ) for a total of 108 values. So 108 = 108, why do we use index buffer? two reasons: first, normally, index buffer is composed of 16 bit sized unsigned int (that can store numbers up to 65535!), while vertex by 32 bits floats, for a total of 360 bytes with index buffer usage and 432 bytes without. Second, not always the index buffer usage produces the same number of data of the other case, but we can say that it's use can reduce the number of data, increasing the speed of execution.
 
+### VERTEX BUFFER AND UNIFORM BUFFER
+
+Basically, this type of buffer pass the data tha will not change during rendering, such as vertices and colors. this is directly opposites to uniforms, that, instead, can change during each execution, but, in the single execution, on the gpu, they are constant values, instead of vertex values, that are set during each execution on gpu. For example, consider this data:\
+i want to send to the gpu a number representing an angle of rotation and a set of vertices of a triangle; the data, during the first execution, are passed like this:\
+\
+angle: 30 // <mark>uniform buffer</mark>\
+vertices: [ \
+      1, 1, 1, \
+      1, 0, 1, \
+      0, 1, 0 \
+      ] <mark>// vertex buffer</mark>
+
+in the gpu, this data, are executed in parallel like this:
+
+**1 thread:** \
+angle: 30 \
+vertices: [ 1, 1, 1 ]\
+**2 thread:** \
+angle: 30   \
+vertices: [ 1, 0, 1 ]   \
+**3 thread:**   \
+angle: 30   \
+vertices: [ 0, 1, 1 ] 
+
+during the second execution of the rendering, the data will be:\
+\
+angle: 60\
+vertices: [ \
+      1, 1, 1,  
+      1, 0, 1, \
+      0, 1, 0 \
+      ]
+
+in the gpu, this data, are executed in parallel like this:\
+
+**1 thread:** \
+angle: 60\
+vertices: [ 1, 1, 1 ]\
+**2 thread:** \
+angle: 60\
+vertices: [ 1, 0, 1 ]\
+**3 thread:**\
+angle: 60\
+vertices: [ 0, 1, 1 ]
+
 ### SHADERS
 
 ### RENDERING PIPELINE
