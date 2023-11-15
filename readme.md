@@ -9,7 +9,7 @@ this engine is intended to be more like a library, very lightweight, without the
 ## NEXT STEPS
 
 - [ ] webgpu texture (on going)
-- [ ] webgpu uniforms (on going)
+- [x] webgpu uniforms (on going)
 - [ ] webgl texture (on going)
 - [ ] webgl uniforms (on going)
 - [x] re-implement the WebGL renderer 
