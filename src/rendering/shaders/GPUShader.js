@@ -1,6 +1,6 @@
 import * as Model from './shaderModel.js';
 import { AttributesName as AN, UniformsName as UN } from './shaderModel.js';
-export class WebGPUShader extends Model.Shader {
+class WebGPUShader extends Model.Shader {
     constructor() {
         super(...arguments);
         this.vInput = '';
@@ -279,7 +279,10 @@ export class WebGPUShader extends Model.Shader {
             uniforms: this._uniformsData,
             attributeStride: this.attribOffset,
             uniformStride: this.uniformOffset,
+            uniformsName: this.uniforms.map((val) => val.substring(0, val.indexOf(':')))
         };
     }
 }
+WebGPUShader.typeSize = [];
+export { WebGPUShader };
 WebGPUShader.setTypes();

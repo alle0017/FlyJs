@@ -1,6 +1,6 @@
 import * as Model from './shaderModel.js';
 import { AttributesName as AN, UniformsName as UN } from './shaderModel.js';
-export class WebGLShader extends Model.Shader {
+class WebGLShader extends Model.Shader {
     constructor() {
         super(...arguments);
         this.fragmentUniforms = [];
@@ -17,16 +17,16 @@ export class WebGLShader extends Model.Shader {
         this.types[WebGLShader.INT] = 'int';
         this.types[WebGLShader.FLOAT] = 'float';
         this.types[WebGLShader.BOOL] = 'bool';
-        this.typeSize[this.VEC4] = { type: 'float32', components: 4, size: 4 };
-        this.typeSize[this.VEC3] = { type: 'float32', components: 3, size: 4 };
-        this.typeSize[this.VEC2] = { type: 'float32', components: 2, size: 4 };
-        this.typeSize[this.INT] = { type: 'sint32', components: 1, size: 4 };
-        this.typeSize[this.FLOAT] = { type: 'float32', components: 1, size: 4 };
+        this.typeSize[this.VEC4] = { type: 'vec4', components: 4, size: 4 };
+        this.typeSize[this.VEC3] = { type: 'vec3', components: 3, size: 4 };
+        this.typeSize[this.VEC2] = { type: 'vec2', components: 2, size: 4 };
+        this.typeSize[this.INT] = { type: 'int', components: 1, size: 4 };
+        this.typeSize[this.FLOAT] = { type: 'float', components: 1, size: 4 };
         //uniforms => type is patched
-        this.typeSize[this.MAT4x4] = { type: 'float32', components: 16, size: 4 };
-        this.typeSize[this.MAT3x3] = { type: 'float32', components: 9, size: 4 };
-        this.typeSize[this.MAT2x2] = { type: 'float32', components: 4, size: 4 };
-        this.typeSize[this.MAT3x2] = { type: 'float32', components: 6, size: 4 };
+        this.typeSize[this.MAT4x4] = { type: 'mat4', components: 16, size: 4 };
+        this.typeSize[this.MAT3x3] = { type: 'mat3', components: 9, size: 4 };
+        this.typeSize[this.MAT2x2] = { type: 'mat2', components: 4, size: 4 };
+        this.typeSize[this.MAT3x2] = { type: 'mat3x2', components: 6, size: 4 };
     }
     getType(type) {
         if (!WebGLShader.types[type])
@@ -52,6 +52,19 @@ export class WebGLShader extends Model.Shader {
         if (!type)
             return;
         this._attributesData.set(name, {
+            dataType: typeInfo.type,
+            shaderLocation: 0,
+            components: typeInfo.components,
+            offset: 0,
+            name,
+            size: typeInfo.size
+        });
+    }
+    addUniformsData(name, type) {
+        const typeInfo = WebGLShader.typeSize[type];
+        if (!type)
+            return;
+        this._uniformsData.set(name, {
             dataType: typeInfo.type,
             shaderLocation: 0,
             components: typeInfo.components,
@@ -130,6 +143,7 @@ export class WebGLShader extends Model.Shader {
         else {
             this.uniforms.push(`uniform ${this.getType(type)} ${name};`);
         }
+        this.addUniformsData(name, type);
         return this;
     }
     addVarying(name, type) {
@@ -211,6 +225,7 @@ export class WebGLShader extends Model.Shader {
         return {
             attributes: this._attributesData,
             uniforms: this._uniformsData,
+            uniformsName: [],
             attributeStride: 0,
             uniformStride: 0,
             vertex: this.getVertex(),
@@ -218,4 +233,6 @@ export class WebGLShader extends Model.Shader {
         };
     }
 }
+WebGLShader.typeSize = [];
+export { WebGLShader };
 WebGLShader.setTypes();

@@ -26,6 +26,8 @@ export class WebGPUShader extends Model.Shader {
       private attribOffset: number = 0;
       private uniformOffset: number = 0;
 
+      protected static typeSize: Model.TypeInfos[] = [];
+
 
       protected addAttributesInfo( name: string, type: number, bindingLocation: number ): void {  
 
@@ -200,7 +202,6 @@ export class WebGPUShader extends Model.Shader {
 
 
       protected addAttribute(name: string, type: number): this {
-
             this.addAttributesInfo( name, type, this.attributeBindingLocation );
 
             this.vInput = `${this.ATTRIBUTES_VARIABLE}: ${this.ATTRIBUTES_STRUCT}`;
@@ -330,6 +331,7 @@ export class WebGPUShader extends Model.Shader {
                   uniforms: this._uniformsData,
                   attributeStride: this.attribOffset,
                   uniformStride: this.uniformOffset,
+                  uniformsName: this.uniforms.map(( val: string )=> val.substring( 0, val.indexOf(':') ) )
             }
       }
 }

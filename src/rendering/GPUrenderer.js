@@ -1,19 +1,103 @@
 import { WebGPU } from "./codeDelegates/GPUcode.js";
 import { ProgramSetterDelegate, } from "./programSetterDelegate.js";
 import { ViewDelegate } from "./matrix/viewMatrix.js";
+import { UniformsName as UN } from './shaders/shaderModel.js';
 import * as Types from './types.js';
 export class Renderer extends WebGPU {
-    constructor() {
-        super(...arguments);
+    constructor(cvs) {
+        super(cvs);
         this.objects = new Map();
+        this.view = new ViewDelegate(this.cvs.width / this.cvs.height);
     }
     async init() {
         await super.init();
-        this.view = new ViewDelegate(this.cvs.width / this.cvs.height);
         this.renderPassDescriptor = this.createRenderPassDescriptor(true);
         return this;
     }
-    setUniforms(pipeline, data) {
+    createRenderFunction(opt) {
+        const defaultRenderFunc = (pass) => {
+            pass.setIndexBuffer(opt.indexBuffer, 'uint16');
+            pass.setVertexBuffer(0, opt.vertexBuffer);
+            pass.drawIndexed(opt.N_OF_VERTICES);
+        };
+        if (!opt.uniforms)
+            return (drawOpt, pass) => {
+                pass.setPipeline(opt.pipeline);
+                defaultRenderFunc(pass);
+            };
+        const uniforms = (drawOpt, pass) => {
+            var _a;
+            if (JSON.stringify(opt.oldData) !== JSON.stringify(drawOpt)) {
+                /*const mat = this.view?.getTransformationMatrix( drawOpt ) || [];
+                opt.uniforms!.data = new Float32Array(
+                      opt.perspective? [...(this.view?.perspectiveMatrix as number[]), ...mat]: mat
+                );*/
+                opt.uniforms.data = (new Float32Array(this.getUniformsData(opt.uniformsName, drawOpt)));
+                opt.oldData = drawOpt;
+            }
+            (_a = this.device) === null || _a === void 0 ? void 0 : _a.queue.writeBuffer(opt.uniforms.buffer, 0, opt.uniforms.data);
+            pass.setBindGroup(0, opt.uniforms.bindGroup);
+        };
+        return (drawOpt, pass) => {
+            pass.setPipeline(opt.pipeline);
+            uniforms(drawOpt, pass);
+            defaultRenderFunc(pass);
+        };
+    }
+    getUniformsData(uniformsName, opt) {
+        // TODO: don't know how displacement and animate are ordered
+        const uniformArray = [];
+        const funcs = {
+            [UN.perspective]: () => {
+                uniformArray.push(...this.view.perspectiveMatrix);
+            },
+            [UN.transformation]: () => {
+                uniformArray.push(...this.view.getTransformationMatrix(opt));
+            },
+            [UN.bumpScale]: () => {
+                uniformArray.push((opt === null || opt === void 0 ? void 0 : opt.bumpScale) || 1);
+            },
+            [UN.framePosition]: () => {
+                uniformArray.push(...((opt === null || opt === void 0 ? void 0 : opt.animationVector) || [0, 0]));
+            },
+        };
+        for (let name of uniformsName) {
+            funcs[name]();
+        }
+        return uniformArray;
+        /*const uniformsFunctions = [
+              ()=>{},
+              ()=>{}
+        ]
+        if( !elementAttr.imageData )
+        return ( opt: Types.DrawOpt )=>{
+              const uniformArray: number[] = [];
+              if( elementAttr.perspective ){
+                    uniformArray.push( ...this.view.perspectiveMatrix );
+              }
+              if( !elementAttr.static ){
+                    uniformArray.push( ...this.view.getTransformationMatrix( opt ) );
+              }
+              return uniformArray;
+        }
+        return ( opt: Types.DrawOpt )=>{
+              const uniformArray: number[] = [];
+              if( elementAttr.perspective ){
+                    uniformArray.push( ...this.view.perspectiveMatrix );
+              }
+              if( !elementAttr.static ){
+                    uniformArray.push( ...this.view.getTransformationMatrix( opt ) );
+              }
+              if( elementAttr.imageData!.animate ){
+                    uniformArray.push( ...( opt?.animationVector || [ 0, 0 ] ) );
+              }
+              if( elementAttr.imageData!.displacementMap ){
+                    uniformArray.push( opt?.bumpScale || 1 );
+              }
+              return uniformArray;
+        }*/
+    }
+    setUniforms(pipeline, data, opt) {
         const buffer = this.createBuffer({
             arrayByteLength: data.uniformStride,
             usage: Types.BufferUsage.uniform,
@@ -28,7 +112,7 @@ export class Renderer extends WebGPU {
         return {
             buffer,
             bindGroup,
-            data: new Float32Array([])
+            data: new Float32Array([]),
         };
     }
     create(opt) {
@@ -45,8 +129,8 @@ export class Renderer extends WebGPU {
             dataType: Types.BufferDataType.float32,
             label: 'vertex buffer',
         });
-        const count = this.getPrimitivesVertexCount(Types.Primitives.triangles);
         if (!opt.indices) {
+            const count = this.getPrimitivesVertexCount(Types.Primitives.triangles);
             opt.indices = [];
             for (let i = 0; i < opt.vertices.length / count; i++)
                 opt.indices.push(i);
@@ -60,28 +144,40 @@ export class Renderer extends WebGPU {
         });
         let uniforms;
         if (data.uniforms.size > 0)
-            uniforms = this.setUniforms(pipeline, data);
+            uniforms = this.setUniforms(pipeline, data, opt);
         let perspective = false;
         if (opt.perspective) {
             perspective = true;
         }
-        let oldData;
-        return (opt, pass) => {
-            var _a, _b, _c;
-            if (uniforms) {
-                if (JSON.stringify(oldData) !== JSON.stringify(opt)) {
-                    const mat = ((_a = this.view) === null || _a === void 0 ? void 0 : _a.getTransformationMatrix(opt)) || [];
-                    uniforms.data = new Float32Array(perspective ? [...(_b = this.view) === null || _b === void 0 ? void 0 : _b.perspectiveMatrix, ...mat] : mat);
-                    oldData = opt;
-                }
-                (_c = this.device) === null || _c === void 0 ? void 0 : _c.queue.writeBuffer(uniforms.buffer, 0, uniforms.data);
-                pass.setBindGroup(0, uniforms.bindGroup);
-            }
-            pass.setPipeline(pipeline);
-            pass.setIndexBuffer(indexBuffer, 'uint16');
-            pass.setVertexBuffer(0, vertexBuffer);
-            pass.drawIndexed(N_OF_VERTICES);
-        };
+        let oldData = {};
+        return this.createRenderFunction({
+            pipeline,
+            vertexBuffer,
+            N_OF_VERTICES,
+            indexBuffer,
+            uniforms,
+            perspective,
+            oldData,
+            uniformsName: data.uniformsName,
+        });
+        /*return ( opt: Types.DrawOpt, pass: GPURenderPassEncoder )=>{
+              if( uniforms ){
+                    if( JSON.stringify( oldData ) !== JSON.stringify( opt ) ){
+                          const mat = this.view?.getTransformationMatrix( opt ) || [];
+                          uniforms.data = new Float32Array(
+                                perspective? [...(this.view?.perspectiveMatrix as number[]), ...mat]: mat
+                          );
+                          oldData = opt;
+                    }
+                    
+                    this.device?.queue.writeBuffer( uniforms.buffer, 0,  uniforms.data );
+                    pass.setBindGroup( 0, uniforms.bindGroup );
+              }
+              pass.setPipeline( pipeline );
+              pass.setIndexBuffer( indexBuffer, 'uint16' );
+              pass.setVertexBuffer( 0, vertexBuffer );
+              pass.drawIndexed( N_OF_VERTICES )
+        }*/
     }
     append(name, func) {
         this.objects.set(name, {

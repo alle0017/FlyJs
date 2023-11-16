@@ -7,6 +7,7 @@ export type ProgramInfo = {
       uniforms: Map<string, Types.BufferData>;
       attributeStride: number;
       uniformStride: number;
+      uniformsName: string[];
 };
 
 export enum AttributesName {
@@ -21,7 +22,7 @@ export enum UniformsName {
       framePosition = 'frame_position'
 }
 export type TypeInfos = {
-      type: GPUVertexFormat;
+      type: string;
       components: number;
       size: number;
 }
@@ -63,8 +64,6 @@ export abstract class Shader {
 
       protected _attributesData: Map<string,Types.BufferData> = new Map<string,Types.BufferData>();
       protected _uniformsData: Map<string,Types.BufferData> = new Map<string,Types.BufferData>();
-
-      protected static typeSize: TypeInfos[] = [];
 
       constructor(){}     
 

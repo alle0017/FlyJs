@@ -17,15 +17,37 @@ GAME --> TILES
 TILES --> TILE_MAP
 GAME --> EVENT_HANDLER
 PHYSICS_ENGINE --> GAME
+OBSERVABLE --> GAME
+EVENT_SYSTEM --> GAME
+EVENT_SYSTEM --> OBSERVABLE
 ```
 # RENDERER
 
+``` typescript
+import { Shapes } from './rendering/shapes.js';
+import { Renderer } from './rendering/GPURenderer.js'; // './rendering/GLRenderer.js'; 
+const color = [...] //your colors data
+const renderer = new Renderer( myCanvas );
+await renderer.init(); // initialize the renderer
+const myCube = renderer.create({
+      ...Shapes.cube( 0.1 ),
+      color,
+      perspective: true // use Perspective in your object
+});
+renderer.append( 'cube', myCube );
+const f = ()=>{
+      // if you want to make dynamic your object use renderer.setAttributes('myCube', { opt... })
+      renderer.draw();;
+      requestAnimationFrame(f);
+}
+f();
+```
 ## NEXT STEPS
 
 - [ ] webgpu texture (on going)
-- [x] webgpu uniforms (on going)
+- [x] webgpu uniforms
 - [ ] webgl texture (on going)
-- [ ] webgl uniforms (on going)
+- [x] webgl uniforms
 - [x] re-implement the WebGL renderer 
 - [ ] implement lights 
 - [ ] implement skeletal animations

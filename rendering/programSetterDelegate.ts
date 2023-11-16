@@ -61,13 +61,11 @@ export class ProgramSetterDelegate {
       static getProperties( data: Types.DrawableElementAttributes, mode: Types.ProgramMode, unifyBuffer: boolean = true ): Types.GPUCodeProperties {
             const infos = mode === Types.ProgramMode.webgpu? new GPU(): new GL();
             const attributes: Map<string, number[]> = new Map<string, number[]>();
-            //const uniforms: Map<string, number[]> = new Map<string, number[]>;
             this.elaborateData( data, attributes, infos );
             attributes.set( AN.vertex, data.vertices );
             return {
                   ...infos.get(),
                   attributesData: attributes,
-                  //uniformsData: uniforms,
                   unifiedAttributeBuffer: unifyBuffer? this.unifyVertexBuffers( attributes, infos ): [],
             };
       }

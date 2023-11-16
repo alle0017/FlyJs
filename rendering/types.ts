@@ -105,6 +105,7 @@ export type DrawOpt = {
        * vectors that indicate where the actual frame and costume of image atlas (sprite sheet) you want to draw
        */
       animationVector?: [number, number];
+      bumpScale?: number;
 }
 
 export type DrawableElementAttributes =  DrawableElementEssential & Partial<DrawableElementOptions>;
@@ -138,7 +139,7 @@ export type ProgramOpt = {
       stride: number,
 }
 
-export type RenderFunction = (( arg0: DrawOpt, arg1: GPURenderPassEncoder )=>void) | (()=>void);
+export type RenderFunction = (( arg0: DrawOpt, arg1: GPURenderPassEncoder )=>void) | (( arg0: DrawOpt )=>void);
 
 export type TypedArray = Float32Array | Uint16Array;
 
@@ -157,6 +158,7 @@ export type GPUCodeProperties = {
       uniforms: Map<string,BufferData>;
       attributeStride: number;
       uniformStride: number;
+      uniformsName: string[];
   }
   export type Renderable = {
       attributes: DrawOpt,

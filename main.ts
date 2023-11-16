@@ -5,7 +5,6 @@ const r = new Renderer(
       document.getElementById('gl') as HTMLCanvasElement
 );
 await r.init();
-r.culling = true;
 const color =  [
       
       1.0, 0.0, 0.0, 1.0, // Front face: white
@@ -46,7 +45,7 @@ const obj1 = r.create({
 const obj2 = r.create({
       ...Shapes.cube( 0.1 ),
       color,
-      perspective: true
+      static: true
 })
 if(  obj2 ){
       r.append( 'obj1', obj1 ).setAttributes('obj1', { translation: { x: 0, y: 0, z: -2}});

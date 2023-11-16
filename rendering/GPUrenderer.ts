@@ -1,22 +1,123 @@
 import { WebGPU } from "./codeDelegates/GPUcode.js";
 import { ProgramSetterDelegate, } from "./programSetterDelegate.js";
 import { ViewDelegate } from "./matrix/viewMatrix.js";
+import { UniformsName as UN } from './shaders/shaderModel.js';
 import * as Types from './types.js';
+
+
+type WebGPURenderFunctionData = {
+      pipeline: GPURenderPipeline,
+      vertexBuffer: GPUBuffer,
+      N_OF_VERTICES: number,
+      indexBuffer: GPUBuffer,
+      uniforms: { buffer: GPUBuffer, bindGroup: GPUBindGroup, data: Float32Array, } | undefined,
+      perspective: boolean,
+      oldData: Types.DrawOpt,
+      uniformsName: string[],
+}
+type UniformsSetterFunction = {
+      [ T in UN ]: ()=>void; 
+}
 
 export class Renderer extends WebGPU { 
 
       protected objects: Map<string,Types.Renderable> = new Map<string,Types.Renderable>();
       protected renderPassDescriptor?: GPURenderPassDescriptor;
-      private view?: ViewDelegate;
+      private view: ViewDelegate;
 
+      constructor( cvs: HTMLCanvasElement ){
+            super( cvs );
+            this.view = new ViewDelegate( this.cvs.width/this.cvs.height );
+      }
 
       override async init(): Promise<this> {
             await super.init();
-            this.view = new ViewDelegate( this.cvs.width/this.cvs.height );
             this.renderPassDescriptor = this.createRenderPassDescriptor( true );
             return this;
       }
-      private setUniforms( pipeline: GPURenderPipeline, data: Types.GPUCodeProperties ){
+      private createRenderFunction( opt: WebGPURenderFunctionData ): Types.RenderFunction {
+            const defaultRenderFunc = ( pass: GPURenderPassEncoder )=>{
+                  pass.setIndexBuffer( opt.indexBuffer, 'uint16' );
+                  pass.setVertexBuffer( 0, opt.vertexBuffer );
+                  pass.drawIndexed( opt.N_OF_VERTICES )
+            }
+            if( !opt.uniforms )
+                  return ( drawOpt: Types.DrawOpt, pass: GPURenderPassEncoder )=>{
+                        pass.setPipeline( opt.pipeline );
+                        defaultRenderFunc( pass );
+                  }
+            const uniforms = ( drawOpt: Types.DrawOpt, pass: GPURenderPassEncoder )=>{
+                  if( JSON.stringify( opt.oldData ) !== JSON.stringify( drawOpt ) ){
+                        /*const mat = this.view?.getTransformationMatrix( drawOpt ) || [];
+                        opt.uniforms!.data = new Float32Array(
+                              opt.perspective? [...(this.view?.perspectiveMatrix as number[]), ...mat]: mat
+                        );*/
+                        opt.uniforms!.data = ( new Float32Array( this.getUniformsData( opt.uniformsName, drawOpt ) ) );
+                        opt.oldData = drawOpt;
+                  }
+                  this.device?.queue.writeBuffer( opt.uniforms!.buffer, 0,  opt.uniforms!.data );
+                  pass.setBindGroup( 0, opt.uniforms!.bindGroup );
+            }
+            return ( drawOpt: Types.DrawOpt, pass: GPURenderPassEncoder )=>{
+                  pass.setPipeline( opt.pipeline );
+                  uniforms( drawOpt, pass );
+                  defaultRenderFunc( pass );
+            }
+      }
+      private getUniformsData( uniformsName: string[], opt: Types.DrawOpt ): number[] {
+            // TODO: don't know how displacement and animate are ordered
+            const uniformArray: number[] = []
+            const funcs: UniformsSetterFunction = {
+                  [UN.perspective]: ()=>{
+                        uniformArray.push( ...this.view.perspectiveMatrix );
+                  },
+                  [UN.transformation]: ()=>{
+                        uniformArray.push( ...this.view.getTransformationMatrix( opt ) );
+                  },
+                  [UN.bumpScale]: ()=>{
+                        uniformArray.push( opt?.bumpScale || 1 );
+                  },
+                  [UN.framePosition]: ()=>{
+                        uniformArray.push( ...( opt?.animationVector || [ 0, 0 ] ) );
+                  },
+            };
+            for( let name of uniformsName ){
+                  funcs[name as UN]();
+            }
+            return uniformArray;
+            /*const uniformsFunctions = [
+                  ()=>{},
+                  ()=>{}
+            ]
+            if( !elementAttr.imageData )
+            return ( opt: Types.DrawOpt )=>{
+                  const uniformArray: number[] = [];
+                  if( elementAttr.perspective ){
+                        uniformArray.push( ...this.view.perspectiveMatrix );
+                  }
+                  if( !elementAttr.static ){
+                        uniformArray.push( ...this.view.getTransformationMatrix( opt ) );
+                  }
+                  return uniformArray;
+            }
+            return ( opt: Types.DrawOpt )=>{
+                  const uniformArray: number[] = [];
+                  if( elementAttr.perspective ){
+                        uniformArray.push( ...this.view.perspectiveMatrix );
+                  }
+                  if( !elementAttr.static ){
+                        uniformArray.push( ...this.view.getTransformationMatrix( opt ) );
+                  }
+                  if( elementAttr.imageData!.animate ){
+                        uniformArray.push( ...( opt?.animationVector || [ 0, 0 ] ) );
+                  }
+                  if( elementAttr.imageData!.displacementMap ){
+                        uniformArray.push( opt?.bumpScale || 1 );
+                  }
+                  return uniformArray;
+            }*/
+      }
+      private setUniforms( pipeline: GPURenderPipeline, data: Types.GPUCodeProperties, opt: Types.DrawableElementAttributes ){
             const buffer = this.createBuffer({
                   arrayByteLength: data.uniformStride,
                   usage: Types.BufferUsage.uniform,
@@ -31,7 +132,7 @@ export class Renderer extends WebGPU {
             return {
                   buffer,
                   bindGroup,
-                  data: new Float32Array([])
+                  data: new Float32Array([]),
             }
       }
 
@@ -51,8 +152,8 @@ export class Renderer extends WebGPU {
                         dataType: Types.BufferDataType.float32,
                         label: 'vertex buffer',
             });
-            const count = this.getPrimitivesVertexCount( Types.Primitives.triangles );
             if( !opt.indices ){
+                  const count = this.getPrimitivesVertexCount( Types.Primitives.triangles );
                   opt.indices = [];
                   for( let i = 0; i < opt.vertices.length/count; i++ )
                         opt.indices.push(i);
@@ -65,15 +166,25 @@ export class Renderer extends WebGPU {
                   label: 'index buffer',
                   usage: Types.BufferUsage.index
             });
-            let uniforms: { buffer: GPUBuffer, bindGroup: GPUBindGroup, data: Float32Array };
+            let uniforms: { buffer: GPUBuffer, bindGroup: GPUBindGroup, data: Float32Array, } | undefined;
             if( data.uniforms.size > 0 )
-                  uniforms = this.setUniforms( pipeline, data );
+                  uniforms = this.setUniforms( pipeline, data, opt );
             let perspective = false;
             if( opt.perspective ){
                   perspective = true;
             }
-            let oldData: Types.DrawOpt;
-            return ( opt: Types.DrawOpt, pass: GPURenderPassEncoder )=>{
+            let oldData: Types.DrawOpt = {};
+            return this.createRenderFunction({
+                  pipeline,
+                  vertexBuffer,
+                  N_OF_VERTICES,
+                  indexBuffer,
+                  uniforms,
+                  perspective,
+                  oldData,
+                  uniformsName: data.uniformsName,
+            });
+            /*return ( opt: Types.DrawOpt, pass: GPURenderPassEncoder )=>{
                   if( uniforms ){
                         if( JSON.stringify( oldData ) !== JSON.stringify( opt ) ){
                               const mat = this.view?.getTransformationMatrix( opt ) || [];
@@ -90,7 +201,7 @@ export class Renderer extends WebGPU {
                   pass.setIndexBuffer( indexBuffer, 'uint16' );
                   pass.setVertexBuffer( 0, vertexBuffer );
                   pass.drawIndexed( N_OF_VERTICES )
-            }
+            }*/
       }
       append( name: string, func: Types.RenderFunction ): this {
             this.objects.set( name,{

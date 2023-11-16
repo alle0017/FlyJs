@@ -1,7 +1,7 @@
-import { DrawOpt, Axis, ProgramMode } from "../types.js";
+import { DrawOpt, Axis, } from "../types.js";
 import { Matrix } from './matrices.js'
+import { UniformsName as UN } from '../shaders/shaderModel.js';
 
-  
 
 export class ViewDelegate {
 

@@ -59,6 +59,7 @@ export class WebGPU extends Model.Renderer {
         }
     }
     createBufferData(buffer) {
+        console.log(buffer);
         const format = buffer.components > 1 ?
             `${buffer.dataType}x${buffer.components}`
             : buffer.dataType;

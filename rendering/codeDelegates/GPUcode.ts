@@ -86,6 +86,7 @@ export class WebGPU extends Model.Renderer {
             }
       }
       protected createBufferData( buffer: Types.BufferData ): GPUVertexAttribute {
+            console.log( buffer );
             const format = buffer.components > 1? 
             `${buffer.dataType}x${buffer.components}`
             : buffer.dataType;

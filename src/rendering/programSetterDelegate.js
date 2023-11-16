@@ -53,11 +53,8 @@ export class ProgramSetterDelegate {
     static getProperties(data, mode, unifyBuffer = true) {
         const infos = mode === Types.ProgramMode.webgpu ? new GPU() : new GL();
         const attributes = new Map();
-        //const uniforms: Map<string, number[]> = new Map<string, number[]>;
         this.elaborateData(data, attributes, infos);
         attributes.set(AN.vertex, data.vertices);
-        return Object.assign(Object.assign({}, infos.get()), { attributesData: attributes, 
-            //uniformsData: uniforms,
-            unifiedAttributeBuffer: unifyBuffer ? this.unifyVertexBuffers(attributes, infos) : [] });
+        return Object.assign(Object.assign({}, infos.get()), { attributesData: attributes, unifiedAttributeBuffer: unifyBuffer ? this.unifyVertexBuffers(attributes, infos) : [] });
     }
 }
