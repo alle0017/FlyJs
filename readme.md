@@ -49,7 +49,7 @@ const myCube = renderer.create({
 renderer.append( 'cube', myCube );
 const f = ()=>{
       // if you want to make dynamic your object use renderer.setAttributes('myCube', { opt... })
-      renderer.draw();;
+      renderer.draw();
       requestAnimationFrame(f);
 }
 f();
