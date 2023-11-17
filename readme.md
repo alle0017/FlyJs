@@ -306,7 +306,7 @@ type Point2D = {
 </tr>
 <tr>
       <td>
-            <ul><li>[x]</li></ul>
+            :heavy_check_mark:
       </td>
       <td>
             webgpu dynamic bindings definition ( create an array of all the bindings) 
