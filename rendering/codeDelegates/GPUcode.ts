@@ -10,6 +10,13 @@ export type BindGroupOpt = {
       pipeline: GPURenderPipeline,
       buffers: Resources[]
 }
+export type GPUTextureDescriptor = {
+      format: GPUTextureFormat, 
+      sampled: boolean,
+      width: number, 
+      height: number,
+      usage: number,
+}
 export class WebGPU extends Model.Renderer {
 
       device?: GPUDevice;
@@ -58,7 +65,7 @@ export class WebGPU extends Model.Renderer {
 
             this.canvasFormat = navigator.gpu.getPreferredCanvasFormat();
 
-            this.depthTexture = this.createTexture( 'depth24plus' );
+            this.depthTexture = this.createTexture( { format: 'depth24plus', sampled: true } );
 
             this.ctx.configure({
                   device: this.device,
@@ -66,7 +73,7 @@ export class WebGPU extends Model.Renderer {
                   alphaMode:'opaque'
             });
 
-            this.renderTarget = this.createTexture( this.canvasFormat );
+            this.renderTarget = this.createTexture({ format: this.canvasFormat, sampled: true } );
             return this;
       }
       protected getPrimitive( primitive: Types.Primitives ): GPUPrimitiveTopology {
@@ -86,7 +93,6 @@ export class WebGPU extends Model.Renderer {
             }
       }
       protected createBufferData( buffer: Types.BufferData ): GPUVertexAttribute {
-            console.log( buffer );
             const format = buffer.components > 1? 
             `${buffer.dataType}x${buffer.components}`
             : buffer.dataType;
@@ -102,12 +108,12 @@ export class WebGPU extends Model.Renderer {
                   let resource;
                   if( el.texture instanceof GPUTexture ){
                         resource = (el.texture as GPUTexture ).createView();
-                  }else if( el.texture instanceof GPUExternalTexture || el.texture instanceof GPUSampler ){
+                  }else if( el.texture instanceof GPUExternalTexture || el.texture instanceof GPUSampler || el.texture instanceof GPUTextureView ){
                         resource = el.texture;
                  } else if( el.buffer ){
                         resource = { buffer: el.buffer };
                   }else{
-                        this.error( 'bind group', Types.RendererErrorType.creation )
+                        this.error( `bind group (uncaught type ${ el.texture} for resources )`, Types.RendererErrorType.creation )
                   }
                   entries.push({
                         binding: el.location,
@@ -153,15 +159,18 @@ export class WebGPU extends Model.Renderer {
             new (Object.getPrototypeOf( data ).constructor)( buffer.getMappedRange() ).set( data );
             buffer.unmap();
       }
-      private createTexture( format: GPUTextureFormat ): GPUTexture {
+      protected createTexture( opt: Partial<GPUTextureDescriptor> ): GPUTexture {
             const texture = this.device?.createTexture({
-                  size: [this.cvs.width, this.cvs.height, 1],
-                  format,
-                  sampleCount: this._antialias,
-                  usage: GPUTextureUsage.RENDER_ATTACHMENT,
+                  size: [
+                        opt.width || this.cvs.width, 
+                        opt.height || this.cvs.height, 
+                        1],
+                  format: opt.format || this.canvasFormat as GPUTextureFormat,
+                  sampleCount: opt.sampled? this._antialias: 1,
+                  usage: opt.usage || GPUTextureUsage.RENDER_ATTACHMENT,
             });
             if( !texture )
-                  this.error( `texture ${format}`, Types.RendererErrorType.creation );
+                  this.error( `texture ${opt.format}`, Types.RendererErrorType.creation );
             return texture as GPUTexture;
       }
       private pipelineDescription( opt: Types.ProgramOpt ): GPURenderPipelineDescriptor {
@@ -215,7 +224,7 @@ export class WebGPU extends Model.Renderer {
             const description: GPURenderPassDescriptor = {
                   colorAttachments: [{
                         view: this.ctx.getCurrentTexture().createView(),
-                        clearValue: { r: 0, g: 0, b: 0, a: 1 }, //background color
+                        clearValue: { r: 1, g: 0, b: 0, a: 1 }, //background color
                         loadOp: 'clear',
                         storeOp: 'store'
                   }],

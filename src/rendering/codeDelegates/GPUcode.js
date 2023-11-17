@@ -33,13 +33,13 @@ export class WebGPU extends Model.Renderer {
         }
         this.device = await this.adapter.requestDevice();
         this.canvasFormat = navigator.gpu.getPreferredCanvasFormat();
-        this.depthTexture = this.createTexture('depth24plus');
+        this.depthTexture = this.createTexture({ format: 'depth24plus', sampled: true });
         this.ctx.configure({
             device: this.device,
             format: this.canvasFormat,
             alphaMode: 'opaque'
         });
-        this.renderTarget = this.createTexture(this.canvasFormat);
+        this.renderTarget = this.createTexture({ format: this.canvasFormat, sampled: true });
         return this;
     }
     getPrimitive(primitive) {
@@ -59,7 +59,6 @@ export class WebGPU extends Model.Renderer {
         }
     }
     createBufferData(buffer) {
-        console.log(buffer);
         const format = buffer.components > 1 ?
             `${buffer.dataType}x${buffer.components}`
             : buffer.dataType;
@@ -76,14 +75,14 @@ export class WebGPU extends Model.Renderer {
             if (el.texture instanceof GPUTexture) {
                 resource = el.texture.createView();
             }
-            else if (el.texture instanceof GPUExternalTexture || el.texture instanceof GPUSampler) {
+            else if (el.texture instanceof GPUExternalTexture || el.texture instanceof GPUSampler || el.texture instanceof GPUTextureView) {
                 resource = el.texture;
             }
             else if (el.buffer) {
                 resource = { buffer: el.buffer };
             }
             else {
-                this.error('bind group', Types.RendererErrorType.creation);
+                this.error(`bind group (uncaught type ${el.texture} for resources )`, Types.RendererErrorType.creation);
             }
             entries.push({
                 binding: el.location,
@@ -130,16 +129,20 @@ export class WebGPU extends Model.Renderer {
         new (Object.getPrototypeOf(data).constructor)(buffer.getMappedRange()).set(data);
         buffer.unmap();
     }
-    createTexture(format) {
+    createTexture(opt) {
         var _a;
         const texture = (_a = this.device) === null || _a === void 0 ? void 0 : _a.createTexture({
-            size: [this.cvs.width, this.cvs.height, 1],
-            format,
-            sampleCount: this._antialias,
-            usage: GPUTextureUsage.RENDER_ATTACHMENT,
+            size: [
+                opt.width || this.cvs.width,
+                opt.height || this.cvs.height,
+                1
+            ],
+            format: opt.format || this.canvasFormat,
+            sampleCount: opt.sampled ? this._antialias : 1,
+            usage: opt.usage || GPUTextureUsage.RENDER_ATTACHMENT,
         });
         if (!texture)
-            this.error(`texture ${format}`, Types.RendererErrorType.creation);
+            this.error(`texture ${opt.format}`, Types.RendererErrorType.creation);
         return texture;
     }
     pipelineDescription(opt) {
@@ -192,7 +195,7 @@ export class WebGPU extends Model.Renderer {
         const description = {
             colorAttachments: [{
                     view: this.ctx.getCurrentTexture().createView(),
-                    clearValue: { r: 0, g: 0, b: 0, a: 1 },
+                    clearValue: { r: 1, g: 0, b: 0, a: 1 },
                     loadOp: 'clear',
                     storeOp: 'store'
                 }],

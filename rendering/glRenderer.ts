@@ -209,8 +209,14 @@ export class Renderer extends WebGL {
             });
             return this;
       }
-      remove( name: string ){
+      remove( name: string ): RenderFunction | undefined {
+            if( !this.objects.has( name ) ){
+                  console.warn(`object ${name} does not exist`);
+                  return;
+            }
+            const func = this.objects.get( name )?.function;
             this.objects.delete( name );
+            return func;
       }
       setAttributes( name: string, opt: DrawOpt ): this {
             if( !this.objects.has( name ) ){

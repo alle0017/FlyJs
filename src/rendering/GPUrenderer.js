@@ -20,7 +20,7 @@ export class Renderer extends WebGPU {
             pass.setVertexBuffer(0, opt.vertexBuffer);
             pass.drawIndexed(opt.N_OF_VERTICES);
         };
-        if (!opt.uniforms)
+        if (!opt.uniforms || !opt.uniforms.buffer)
             return (drawOpt, pass) => {
                 pass.setPipeline(opt.pipeline);
                 defaultRenderFunc(pass);
@@ -97,17 +97,56 @@ export class Renderer extends WebGPU {
               return uniformArray;
         }*/
     }
+    useImage(image) {
+        var _a, _b;
+        const texture = this.createTexture({
+            usage: GPUTextureUsage.TEXTURE_BINDING |
+                GPUTextureUsage.COPY_DST |
+                GPUTextureUsage.RENDER_ATTACHMENT,
+            width: image.width,
+            height: image.height,
+            format: 'rgba8unorm'
+        });
+        (_a = this.device) === null || _a === void 0 ? void 0 : _a.queue.copyExternalImageToTexture({ source: image, flipY: true }, { texture }, { width: image.width, height: image.height });
+        const sampler = (_b = this.device) === null || _b === void 0 ? void 0 : _b.createSampler(); /*{
+              addressModeU: 'repeat',
+              addressModeV: 'repeat',
+              magFilter: 'linear',
+            });*/
+        return {
+            sampler: sampler,
+            texture: texture,
+        };
+    }
+    addImageUniformData(image, buffers, location, sampler = true) {
+        const textureData = this.useImage(image);
+        buffers.push({
+            location: location,
+            texture: textureData.texture.createView(),
+        });
+        if (!sampler)
+            return;
+        buffers.push({
+            texture: textureData.sampler,
+            location: location + 1,
+        });
+    }
     setUniforms(pipeline, data, opt) {
+        const buffers = [];
         const buffer = this.createBuffer({
-            arrayByteLength: data.uniformStride,
+            arrayByteLength: data.uniformStride || 1,
             usage: Types.BufferUsage.uniform,
         });
+        buffers.push({
+            location: 0,
+            buffer
+        });
+        if (opt.imageData) {
+            this.addImageUniformData(opt.imageData.image, buffers, 1);
+        }
         const bindGroup = this.createUniformBindingGroup({
             pipeline,
-            buffers: [{
-                    location: 0,
-                    buffer
-                }]
+            buffers
         });
         return {
             buffer,
@@ -117,6 +156,7 @@ export class Renderer extends WebGPU {
     }
     create(opt) {
         const data = ProgramSetterDelegate.getProperties(opt, Types.ProgramMode.webgpu);
+        console.log(data.vertex + data.fragment);
         const pipeline = this.createPipeline({
             vShader: data.vertex,
             fShader: data.fragment,
@@ -124,6 +164,7 @@ export class Renderer extends WebGPU {
             stride: data.attributeStride,
             enableDepth: true,
         });
+        console.log(data.unifiedAttributeBuffer);
         const vertexBuffer = this.createBuffer({
             data: data.unifiedAttributeBuffer,
             dataType: Types.BufferDataType.float32,
@@ -194,7 +235,16 @@ export class Renderer extends WebGPU {
         this.objects.get(name).attributes = Object.assign(Object.assign({}, this.objects.get(name).attributes), attributes);
         return this;
     }
-    remove() { }
+    remove(name) {
+        var _a;
+        if (!this.objects.has(name)) {
+            console.warn(`object ${name} does not exist`);
+            return;
+        }
+        const func = (_a = this.objects.get(name)) === null || _a === void 0 ? void 0 : _a.function;
+        this.objects.delete(name);
+        return func;
+    }
     draw() {
         var _a, _b;
         if (!this.renderPassDescriptor)

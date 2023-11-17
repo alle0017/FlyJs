@@ -175,7 +175,14 @@ export class Renderer extends WebGL {
         return this;
     }
     remove(name) {
+        var _a;
+        if (!this.objects.has(name)) {
+            console.warn(`object ${name} does not exist`);
+            return;
+        }
+        const func = (_a = this.objects.get(name)) === null || _a === void 0 ? void 0 : _a.function;
         this.objects.delete(name);
+        return func;
     }
     setAttributes(name, opt) {
         if (!this.objects.has(name)) {

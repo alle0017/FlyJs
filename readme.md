@@ -9,31 +9,39 @@ this engine is intended to be more like a library, very lightweight, without the
 graph TD;
 WEBGL-->RENDERER
 WEBGPU-->RENDERER
-RENDERER--> ABSTRACT_API
-ABSTRACT_API --> GAME
-GAME --> SPRITE_2D
-GAME --> SPRITE_3D
-GAME --> TILES
-TILES --> TILE_MAP
-GAME --> EVENT_HANDLER
+indexDB_SAVING_SYSTEM --> GAME
+MOBILE_SUPPORT --> GAME
+RENDERER --> GAME
 PHYSICS_ENGINE --> GAME
 OBSERVABLE --> GAME
 EVENT_SYSTEM --> GAME
+GAME --> SAVINGS
+GAME --> MOBILE_API
+GAME --> ENTITIES
+GAME --> EVENT_HANDLER
+ENTITIES --> PARTICLES_SYSTEM
+ENTITIES --> SPRITE_3D
+ENTITIES --> TILES
+TILES --> TILE_MAP
+SPRITE_3D --> SPRITE_2D
 EVENT_SYSTEM --> OBSERVABLE
-indexDB_SAVING_SYSTEM --> GAME
-MOBILE_SUPPORT --> GAME
+
 ```
 # RENDERER
 
 ## TABLE OF CONTENTS
+##### RENDERER METHODS
 -[append](#append)\
 -[setAttributes](#setattributes)\
 -[remove](#remove)\
--[draw](#draw)\
+-[draw](#draw)
+##### TYPES
 -[DrawOpt](#drawopt)\
 -[DrawableImageOptions](#drawableelementoptions)\
 -[Point3D](#point3d)\
--[Point2D](#point2d)
+-[Point2D](#point2d)\
+-[Next step](#next-steps)\
+-[Documentation](#documentation)
 
 ``` typescript
 import { Shapes } from './rendering/shapes.js';
@@ -77,7 +85,7 @@ accept string and [DrawOpt](#drawopt) as parameter. Changes the values of the ob
 
 ### remove
 ``` typescript
-remove( string ): RenderFunction;
+remove( string ): RenderFunction | undefined;
 ```
 \
 remove the object named with the string passed as first argument. return the RenderFunction deleted.
@@ -193,11 +201,130 @@ type Point2D = {
 
 ## NEXT STEPS
 
-- [ ] webgpu texture (on going)
-- [x] webgpu uniforms
-- [ ] webgl texture (on going)
-- [x] webgl uniforms
-- [x] re-implement the WebGL renderer 
-- [ ] implement lights 
-- [ ] implement skeletal animations
-- [ ] implement a fallback system with possibility of require specific api for the renderer (on going)
+### LEGEND
+- done: "already implemented"
+- on-going: "actually working at..."
+- coming soon: "the next step"
+- ideally: "if possible, in the future will be supported"
+
+<table>
+<tr>
+      <th> 
+            checklist
+      </th>
+      <th>
+            feature
+      </th>
+      <th>
+            status
+      </th>
+</tr>
+<tr>
+      <td>
+            [x] 
+      </td>
+      <td>
+            webgpu texture
+      </td>
+      <td>
+            done
+      </td>
+</tr>
+<tr>
+      <td>
+            [ ] 
+      </td>
+      <td>
+            webgpu dynamic bindings definition ( create an array of all the bindings) 
+      </td>
+      <td>
+            on-going
+      </td>
+</tr>
+<tr>
+      <td>
+            [x] 
+      </td>
+      <td>
+            webgpu uniforms
+      </td>
+      <td>
+            done
+      </td>
+</tr> 
+<tr>
+      <td>
+            [ ] 
+      </td>
+      <td>
+            webgl texture
+      </td>
+      <td>
+            on-going
+      </td>
+</tr>
+<tr>
+      <td>
+            [x] 
+      </td>
+      <td>
+            webgl uniforms
+      </td>
+      <td>
+            done
+      </td>
+</tr>
+<tr>
+      <td>
+            [ ] 
+      </td>
+      <td>
+            implement lights
+      </td>
+      <td>
+            coming soon
+      </td>
+</tr>
+<tr>
+      <td>
+            [ ] 
+      </td>
+      <td>
+            implement skeletal animations
+      </td>
+      <td>
+            coming soon
+      </td>
+</tr>
+<tr>
+      <td>
+            [ ] 
+      </td>
+      <td>
+            implement a fallback system with possibility of require specific api for the renderer
+      </td>
+      <td>
+            on-going
+      </td>
+</tr>
+</table>
+
+## DOCUMENTATION
+this section contains all the material used to study rendering (by me), and that I'd thought could be helpful for the beginners
+### WebGL
+[-WebGL Fundamentals](https://webglfundamentals.org/)\
+[-Mozilla docs](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Getting_started_with_WebGL)
+
+### WebGPU
+[-WebGPU Step By Step](https://github.com/jack1232/WebGPU-Step-By-Step)\
+[-Raw WebGPU](https://alain.xyz/blog/raw-webgpu)\
+[-code labs google tutorial](https://codelabs.developers.google.com/your-first-webgpu-app#6)\
+[-Mozilla docs](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API)\
+[-WebGPU Fundamentals](https://webgpufundamentals.org/)
+
+### VARIOUS RENDERING TECHNIQUES
+
+[-Skeletal Animation](https://veeenu.github.io/blog/implementing-skeletal-animation/)\
+[-WebGPU API for C++](https://eliemichel.github.io/LearnWebGPU/introduction.html)\
+[-WebGPU for Metal developers](https://metalbyexample.com/webgpu-part-two/)\
+[-Render grass](https://www.youtube.com/watch?v=bp7REZBV4P4&t=401s)

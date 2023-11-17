@@ -263,8 +263,8 @@ export class WebGPUShader extends Model.Shader {
             .resetVariables()
             .addAttribute(AN.vertex, WebGPUShader.VEC3)
             .addAttribute(AN.textureCoordinates, WebGPUShader.VEC2)
-            .addBinding('texture_sampler', WebGPUShader.SAMPLER)
             .addBinding('texture', WebGPUShader.TEXTURE2D)
+            .addBinding('texture_sampler', WebGPUShader.SAMPLER)
             .addVarying('texture_coords', WebGPUShader.VEC2);
 
             this.vCode.push(`

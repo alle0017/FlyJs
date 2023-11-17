@@ -26,6 +26,7 @@ export class ProgramSetterDelegate {
             }
             if( data.imageData ){
                   this.elaborateImageData( data.imageData, infos );
+                  attributes.set( AN.textureCoordinates, data.imageData.textureCoords );
             }
             if( data.perspective ){
                   infos.usePerspective();

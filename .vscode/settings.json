@@ -21,6 +21,7 @@
             "unconfigure",
             "unmap",
             "Unmaps",
+            "webgl",
             "webgpu",
             "WGSL",
             "widlparser",
