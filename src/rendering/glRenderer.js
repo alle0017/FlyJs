@@ -142,30 +142,6 @@ export class Renderer extends WebGL {
             indexBuffer,
             objOpt: opt
         });
-        /*return ( drawOpt?: DrawOpt )=>{
-              
-              this.gl.useProgram( program );
-              for( let [ key, buffer ] of vertexBuffers.entries() ){
-                    const bufferData = data.attributes.get( key )!;
-                    this.gl.bindBuffer( this.gl.ARRAY_BUFFER, buffer );
-                    this.gl.vertexAttribPointer(
-                          bufferData.shaderLocation,
-                          bufferData.components,
-                          this.gl.FLOAT,
-                          false, 0, 0 );
-                    this.gl.enableVertexAttribArray( bufferData.shaderLocation );
-              }
-              if( locations.size > 0 ){
-                    const uniformsData = this.getUniformsData( drawOpt, opt );
-                    for( let [key, value] of locations.entries() ){
-                          const bufferData = data.uniforms.get( key );
-                          if( bufferData && uniformsData[key as UN] )
-                                this.setUniforms( bufferData , value, uniformsData[key as UN]! );
-                    }
-              }
-              this.gl.bindBuffer( this.gl.ELEMENT_ARRAY_BUFFER, indexBuffer );
-              this.gl.drawElements( primitive, N_OF_VERTICES, this.gl.UNSIGNED_SHORT, 0);
-        }*/
     }
     append(name, func) {
         this.objects.set(name, {

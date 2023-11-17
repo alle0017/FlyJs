@@ -252,6 +252,4 @@ export class WebGPU extends Model.Renderer {
             this.error('shader', Types.RendererErrorType.creation);
         return shader;
     }
-    enableCulling() {
-    }
 }

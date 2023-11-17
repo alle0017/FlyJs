@@ -100,7 +100,7 @@ const image = r.create({
                   1, 0, 
             ]
       },
-      perspective: true,
+      //static: true
 })
 r.culling = true
 /*const obj2 = r.create({
@@ -113,8 +113,8 @@ r.culling = true
       },
 })*/
       r.append( 'img', image ).setAttributes('img', { 
-            translation: {x: 0, y: 0, z: -6}, 
-            scale: 0.05
+            translation: {x: 0, y: 0, z: 0}, 
+            scale: 0.5
       })
       //r.append('cube', obj2)
       /*r.setAttributes('cube', { 

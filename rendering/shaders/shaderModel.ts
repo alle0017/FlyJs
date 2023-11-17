@@ -5,6 +5,7 @@ export type ProgramInfo = {
       vertex: string; 
       attributes: Map<string, Types.BufferData>;
       uniforms: Map<string, Types.BufferData>;
+      bindings?: {type: string, name: string}[];
       attributeStride: number;
       uniformStride: number;
       uniformsName: string[];
@@ -19,7 +20,12 @@ export enum UniformsName {
       perspective = 'perspective',
       transformation = 'transformation',
       bumpScale = 'bump_scale',
-      framePosition = 'frame_position'
+      framePosition = 'frame_position',
+}
+export enum BindingsName {
+      texture = 'texture',
+      textureSampler = 'texture_sampler',
+      displacementMap = 'displacement_map',
 }
 export type TypeInfos = {
       type: string;

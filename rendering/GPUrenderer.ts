@@ -1,8 +1,9 @@
 import { WebGPU, Resources } from "./codeDelegates/GPUcode.js";
 import { ProgramSetterDelegate, } from "./programSetterDelegate.js";
 import { ViewDelegate } from "./matrix/viewMatrix.js";
-import { UniformsName as UN } from './shaders/shaderModel.js';
+import { UniformsName as UN, BindingsName as BN } from './shaders/shaderModel.js';
 import * as Types from './types.js';
+import { UNIFORM } from "./shaders/GPUShader.js";
 
 
 type WebGPURenderFunctionData = {
@@ -10,7 +11,7 @@ type WebGPURenderFunctionData = {
       vertexBuffer: GPUBuffer,
       N_OF_VERTICES: number,
       indexBuffer: GPUBuffer,
-      uniforms: { buffer: GPUBuffer, bindGroup: GPUBindGroup, data: Float32Array, } | undefined,
+      uniforms: { buffer: GPUBuffer | undefined, bindGroup: GPUBindGroup, data: Float32Array, } | undefined,
       perspective: boolean,
       oldData: Types.DrawOpt,
       uniformsName: string[],
@@ -41,21 +42,25 @@ export class Renderer extends WebGPU {
                   pass.setVertexBuffer( 0, opt.vertexBuffer );
                   pass.drawIndexed( opt.N_OF_VERTICES )
             }
-            if( !opt.uniforms || !opt.uniforms.buffer )
+            if( !opt.uniforms )
                   return ( drawOpt: Types.DrawOpt, pass: GPURenderPassEncoder )=>{
                         pass.setPipeline( opt.pipeline );
                         defaultRenderFunc( pass );
                   }
+            console.log('no uniform')
+            if( !opt.uniforms.buffer )
+                  return ( drawOpt: Types.DrawOpt, pass: GPURenderPassEncoder )=>{
+                        pass.setBindGroup( 0, opt.uniforms!.bindGroup );
+                        pass.setPipeline( opt.pipeline );
+                        defaultRenderFunc( pass );
+                  }
+            console.log('no buffer')
             const uniforms = ( drawOpt: Types.DrawOpt, pass: GPURenderPassEncoder )=>{
                   if( JSON.stringify( opt.oldData ) !== JSON.stringify( drawOpt ) ){
-                        /*const mat = this.view?.getTransformationMatrix( drawOpt ) || [];
-                        opt.uniforms!.data = new Float32Array(
-                              opt.perspective? [...(this.view?.perspectiveMatrix as number[]), ...mat]: mat
-                        );*/
                         opt.uniforms!.data = ( new Float32Array( this.getUniformsData( opt.uniformsName, drawOpt ) ) );
                         opt.oldData = drawOpt;
                   }
-                  this.device?.queue.writeBuffer( opt.uniforms!.buffer, 0,  opt.uniforms!.data );
+                  this.device?.queue.writeBuffer( opt.uniforms!.buffer!, 0,  opt.uniforms!.data );
                   pass.setBindGroup( 0, opt.uniforms!.bindGroup );
             }
             return ( drawOpt: Types.DrawOpt, pass: GPURenderPassEncoder )=>{
@@ -65,7 +70,6 @@ export class Renderer extends WebGPU {
             }
       }
       private getUniformsData( uniformsName: string[], opt: Types.DrawOpt ): number[] {
-            // TODO: don't know how displacement and animate are ordered
             const uniformArray: number[] = []
             const funcs: UniformsSetterFunction = {
                   [UN.perspective]: ()=>{
@@ -85,37 +89,6 @@ export class Renderer extends WebGPU {
                   funcs[name as UN]();
             }
             return uniformArray;
-            /*const uniformsFunctions = [
-                  ()=>{},
-                  ()=>{}
-            ]
-            if( !elementAttr.imageData )
-            return ( opt: Types.DrawOpt )=>{
-                  const uniformArray: number[] = [];
-                  if( elementAttr.perspective ){
-                        uniformArray.push( ...this.view.perspectiveMatrix );
-                  }
-                  if( !elementAttr.static ){
-                        uniformArray.push( ...this.view.getTransformationMatrix( opt ) );
-                  }
-                  return uniformArray;
-            }
-            return ( opt: Types.DrawOpt )=>{
-                  const uniformArray: number[] = [];
-                  if( elementAttr.perspective ){
-                        uniformArray.push( ...this.view.perspectiveMatrix );
-                  }
-                  if( !elementAttr.static ){
-                        uniformArray.push( ...this.view.getTransformationMatrix( opt ) );
-                  }
-                  if( elementAttr.imageData!.animate ){
-                        uniformArray.push( ...( opt?.animationVector || [ 0, 0 ] ) );
-                  }
-                  if( elementAttr.imageData!.displacementMap ){
-                        uniformArray.push( opt?.bumpScale || 1 );
-                  }
-                  return uniformArray;
-            }*/
       }
       private useImage( image: ImageBitmap ){
             const texture = this.createTexture({
@@ -133,41 +106,45 @@ export class Renderer extends WebGPU {
                   { texture },
                   { width: image.width, height: image.height },
             );
-            const sampler = this.device?.createSampler()/*{
-                  addressModeU: 'repeat',
-                  addressModeV: 'repeat',
-                  magFilter: 'linear',
-                });*/
+            const sampler = this.device?.createSampler()
             return {
                   sampler: sampler,
                   texture: texture,
             }
       }
-      private addImageUniformData( image: ImageBitmap, buffers: Resources[], location: number, sampler: boolean = true ): void {
-            const textureData = this.useImage( image );
-            buffers.push({
-                  location: location,
-                  texture: textureData.texture.createView(),
-            })
-            if( !sampler ) return;
-            buffers.push({
-                  texture: textureData.sampler,
-                  location: location + 1,
-            })
-      }
-      private setUniforms( pipeline: GPURenderPipeline, data: Types.GPUCodeProperties, opt: Types.DrawableElementAttributes ){
-            
+      private setUniforms( pipeline: GPURenderPipeline, stride: number, bindings: {type: string, name: string}[], imageData?: Types.DrawableImageOptions ){
             const buffers: Resources[] = [];
-            const buffer: GPUBuffer = this.createBuffer({
-                  arrayByteLength: data.uniformStride || 1,
-                  usage: Types.BufferUsage.uniform,
-            });
-            buffers.push({
-                  location: 0,
-                  buffer
-            });
-            if( opt.imageData ){
-                  this.addImageUniformData( opt.imageData.image, buffers, 1 );
+            let buffer: GPUBuffer | undefined;
+            const funcs: { [k in BN]: (arg: any)=>void;} & { [UNIFORM]: (arg: any)=>void } = {
+                  [BN.displacementMap]: (resource: Resources)=>{
+                        if( imageData && imageData.displacementMap )
+                        resource.texture = this.useImage( imageData.displacementMap! ).texture.createView();
+                  },
+                  [BN.texture]: (resource: Resources)=>{
+                        if( imageData )
+                        resource.texture = this.useImage( imageData.image ).texture.createView();
+                  },
+                  [BN.textureSampler]: (resource: Resources)=>{
+                        resource.texture = this.device?.createSampler();
+                  },
+                  [UNIFORM]: (resource: Resources)=>{
+                        buffer = this.createBuffer({
+                              arrayByteLength: stride,
+                              usage: Types.BufferUsage.uniform,
+                        });
+                        resource.buffer = buffer;
+                  }
+            };
+            for( let i = 0; i < bindings.length; i++ ){
+                  const resource: Resources = {
+                        location: i,
+                  }
+                  if( funcs[ bindings[i].name as BN ] ){
+                        funcs[ bindings[i].name as BN ]( resource );
+                  }else{
+                        this.error( `uniform bind group (name ${bindings[i].name} not recognized)`, Types.RendererErrorType.initialization )
+                  }
+                  buffers.push( resource )
             }
             const bindGroup = this.createUniformBindingGroup( {
                   pipeline,
@@ -183,7 +160,6 @@ export class Renderer extends WebGPU {
       create( opt: Types.DrawableElementAttributes ): Types.RenderFunction {
 
             const data = ProgramSetterDelegate.getProperties( opt, Types.ProgramMode.webgpu );
-            console.log( data.vertex + data.fragment )
             const pipeline = this.createPipeline({
                   vShader: data.vertex,
                   fShader: data.fragment,
@@ -191,7 +167,6 @@ export class Renderer extends WebGPU {
                   stride: data.attributeStride,
                   enableDepth: true,
             });
-            console.log( data.unifiedAttributeBuffer )
             const vertexBuffer = this.createBuffer({
                         data: data.unifiedAttributeBuffer,
                         dataType: Types.BufferDataType.float32,
@@ -211,9 +186,9 @@ export class Renderer extends WebGPU {
                   label: 'index buffer',
                   usage: Types.BufferUsage.index
             });
-            let uniforms: { buffer: GPUBuffer, bindGroup: GPUBindGroup, data: Float32Array, } | undefined;
-            if( data.uniforms.size > 0 )
-                  uniforms = this.setUniforms( pipeline, data, opt );
+            let uniforms: { buffer: GPUBuffer | undefined, bindGroup: GPUBindGroup, data: Float32Array, } | undefined;
+            if( data.bindings && data.bindings.length > 0 )
+                  uniforms = this.setUniforms( pipeline, data.uniformStride, data.bindings!, opt.imageData );
             let perspective = false;
             if( opt.perspective ){
                   perspective = true;
@@ -229,24 +204,6 @@ export class Renderer extends WebGPU {
                   oldData,
                   uniformsName: data.uniformsName,
             });
-            /*return ( opt: Types.DrawOpt, pass: GPURenderPassEncoder )=>{
-                  if( uniforms ){
-                        if( JSON.stringify( oldData ) !== JSON.stringify( opt ) ){
-                              const mat = this.view?.getTransformationMatrix( opt ) || [];
-                              uniforms.data = new Float32Array(
-                                    perspective? [...(this.view?.perspectiveMatrix as number[]), ...mat]: mat
-                              );
-                              oldData = opt;
-                        }
-                        
-                        this.device?.queue.writeBuffer( uniforms.buffer, 0,  uniforms.data );
-                        pass.setBindGroup( 0, uniforms.bindGroup );
-                  } 
-                  pass.setPipeline( pipeline );
-                  pass.setIndexBuffer( indexBuffer, 'uint16' );
-                  pass.setVertexBuffer( 0, vertexBuffer );
-                  pass.drawIndexed( N_OF_VERTICES )
-            }*/
       }
       append( name: string, func: Types.RenderFunction ): this {
             this.objects.set( name,{

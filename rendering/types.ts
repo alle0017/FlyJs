@@ -159,6 +159,7 @@ export type GPUCodeProperties = {
       attributeStride: number;
       uniformStride: number;
       uniformsName: string[];
+      bindings?: { name: string, type: string }[];
   }
   export type Renderable = {
       attributes: DrawOpt,

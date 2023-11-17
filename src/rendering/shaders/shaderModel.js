@@ -11,6 +11,12 @@ export var UniformsName;
     UniformsName["bumpScale"] = "bump_scale";
     UniformsName["framePosition"] = "frame_position";
 })(UniformsName || (UniformsName = {}));
+export var BindingsName;
+(function (BindingsName) {
+    BindingsName["texture"] = "texture";
+    BindingsName["textureSampler"] = "texture_sampler";
+    BindingsName["displacementMap"] = "displacement_map";
+})(BindingsName || (BindingsName = {}));
 class Shader {
     constructor() {
         this.varyings = [];

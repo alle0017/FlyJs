@@ -1,15 +1,21 @@
 import * as Model from './shaderModel.js';
-import { AttributesName as AN, UniformsName as UN } from './shaderModel.js';
+import { AttributesName as AN, UniformsName as UN, BindingsName as BN } from './shaderModel.js';
 
-
+export const UNIFORM = 'uniform';
 export class WebGPUShader extends Model.Shader {
-      
       private vInput: string = '';
       private fInput: string = '';
       private bindings: string[] = [];
       private attributeBindingLocation: number = 0;
       private varyingBindingLocation: number = 0;
-      private groupBindingLocation: number = 1;
+      /**
+      * first free location
+       */
+      private groupBindingLocation: number = 0;
+
+      private uniformBindingLocation: number = -1;
+
+      private bindingsData: {type: string, name: string}[] = [];
 
       private readonly VARYING_STRUCT: string = 'Varyings';
       private readonly UNIFORMS_STRUCT: string = 'Uniforms';
@@ -20,8 +26,6 @@ export class WebGPUShader extends Model.Shader {
       private readonly ATTRIBUTES_VARIABLE: string = 'vInput';
       private readonly VARYING_VARIABLE: string = 'fInput';
       private readonly DEFAULT_VERTEX_RETURNED_VALUE: string = `vec4f(${this.ATTRIBUTES_VARIABLE}.${AN.vertex}, 1)`;
-
-      bindingsInfo: [] = [];
 
       private attribOffset: number = 0;
       private uniformOffset: number = 0;
@@ -46,21 +50,25 @@ export class WebGPUShader extends Model.Shader {
             this.attribOffset += typeInfo.components * typeInfo.size;
       }
 
-      protected addUniformInfo( name: string, type: number, bindingLocation: number ): void {
-            
+      protected addUniformInfo( name: string, type: number, bindingLocation: number ):  {
+            components: number,
+            size: number
+      } {   
             const typeInfo = WebGPUShader.typeSize[type]? 
                   WebGPUShader.typeSize[type]: 
                   {type: '', components: 0, size: 0};
-            
-            this._uniformsData.set(name, {
-                  dataType: typeInfo.type,
-                  shaderLocation: bindingLocation,
+            if( bindingLocation === this.uniformBindingLocation ){
+                  typeInfo.type = UNIFORM;
+                  name = UNIFORM;
+            }
+            this.bindingsData[ bindingLocation ] = {
+                  type: this.getType(type),
+                  name
+            };
+            return {
                   components: typeInfo.components,
-                  offset: this.uniformOffset,
-                  name,
                   size: typeInfo.size
-            });
-            this.uniformOffset += typeInfo.components * typeInfo.size;
+            }
       }
 
 
@@ -111,13 +119,15 @@ export class WebGPUShader extends Model.Shader {
 
             this.varyingBindingLocation = 0;
             this.attributeBindingLocation = 0;
-            this.groupBindingLocation = 1;
+            this.groupBindingLocation = 0;
+            this.uniformBindingLocation = -1;
 
             this.fragmentReturnedValue = '';
             this.vertexReturnedValue = '';
 
             this._attributesData.clear();
             this._uniformsData.clear();
+            this.bindingsData = [];
 
             return this;
       }
@@ -135,7 +145,7 @@ export class WebGPUShader extends Model.Shader {
             struct ${this.UNIFORMS_STRUCT}{
                   ${this.uniforms.reduce((prev, next)=> `${prev}\n\t\t\t\t\t${next}`)}
             }
-            @group(0) @binding(0) var<uniform> ${this.UNIFORMS_VARIABLE}: ${this.UNIFORMS_STRUCT};
+            @group(0) @binding(${this.uniformBindingLocation}) var<uniform> ${this.UNIFORMS_VARIABLE}: ${this.UNIFORMS_STRUCT};
             `
       }
       protected getVaryingsDefinition(): string {
@@ -210,9 +220,10 @@ export class WebGPUShader extends Model.Shader {
             return this;
       }
       protected addUniform(name: string, type: number): this {
-
-            this.addUniformInfo( name, type, 0 );
-
+            if( this.uniformBindingLocation < 0 )
+                  this.uniformBindingLocation = this.groupBindingLocation;
+            const data = this.addUniformInfo( name, type, this.uniformBindingLocation );
+            this.uniformOffset += data.components*data.size;
             this.uniforms.push(`${name}: ${this.getType(type)},`);
             return this;
       }
@@ -263,8 +274,8 @@ export class WebGPUShader extends Model.Shader {
             .resetVariables()
             .addAttribute(AN.vertex, WebGPUShader.VEC3)
             .addAttribute(AN.textureCoordinates, WebGPUShader.VEC2)
-            .addBinding('texture', WebGPUShader.TEXTURE2D)
-            .addBinding('texture_sampler', WebGPUShader.SAMPLER)
+            .addBinding(BN.texture, WebGPUShader.TEXTURE2D)
+            .addBinding(BN.textureSampler, WebGPUShader.SAMPLER)
             .addVarying('texture_coords', WebGPUShader.VEC2);
 
             this.vCode.push(`
@@ -273,7 +284,7 @@ export class WebGPUShader extends Model.Shader {
             out.texture_coords = ${this.ATTRIBUTES_VARIABLE}.${AN.textureCoordinates};
             `);
             this.vertexReturnedValue = 'out';
-            this.fragmentReturnedValue = `textureSample(texture, texture_sampler, ${this.VARYING_VARIABLE}.texture_coords)`
+            this.fragmentReturnedValue = `textureSample(${BN.texture}, ${BN.textureSampler}, ${this.VARYING_VARIABLE}.texture_coords)`
             return this;
       }
       useInterpolatedColor(): this {
@@ -314,10 +325,10 @@ export class WebGPUShader extends Model.Shader {
             }
 
             this
-            .addBinding('displacement_map', WebGPUShader.TEXTURE2D)
+            .addBinding(BN.displacementMap, WebGPUShader.TEXTURE2D)
             .addUniform(UN.bumpScale, WebGPUShader.FLOAT);
             this.vCode.push(`
-                  var height = textureSampleLevel( displacement_map, texture_sampler, ${this.ATTRIBUTES_VARIABLE}.${AN.textureCoordinates}, 0.0 );
+                  var height = textureSampleLevel( ${BN.displacementMap}, ${BN.textureSampler}, ${this.ATTRIBUTES_VARIABLE}.${AN.textureCoordinates}, 0.0 );
                   out.position.y += ${this.UNIFORMS_VARIABLE}.${UN.bumpScale} * height;
             `);
             
@@ -328,7 +339,8 @@ export class WebGPUShader extends Model.Shader {
                   vertex: this.getVertex(),
                   fragment: this.getFragment(),
                   attributes: this._attributesData,
-                  uniforms: this._uniformsData,
+                  uniforms: this._uniformsData, // not used
+                  bindings: this.bindingsData,
                   attributeStride: this.attribOffset,
                   uniformStride: this.uniformOffset,
                   uniformsName: this.uniforms.map(( val: string )=> val.substring( 0, val.indexOf(':') ) )

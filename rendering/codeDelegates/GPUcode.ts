@@ -19,7 +19,7 @@ export type GPUTextureDescriptor = {
 }
 export class WebGPU extends Model.Renderer {
 
-      device?: GPUDevice;
+      protected device?: GPUDevice;
       protected adapter?: GPUAdapter;
 
       protected ctx: GPUCanvasContext;
@@ -287,8 +287,5 @@ export class WebGPU extends Model.Renderer {
             if( !shader )
                   this.error( 'shader', Types.RendererErrorType.creation );
             return shader as GPUShaderModule;
-      }
-      enableCulling(){
-
       }
 }

@@ -1,5 +1,5 @@
 import * as Model from './shaderModel.js';
-import { AttributesName as AN, UniformsName as UN } from './shaderModel.js';
+import { AttributesName as AN, UniformsName as UN, BindingsName as BN } from './shaderModel.js';
 class WebGLShader extends Model.Shader {
     constructor() {
         super(...arguments);
@@ -175,7 +175,7 @@ class WebGLShader extends Model.Shader {
     useTexture() {
         this
             .resetVariables()
-            .addUniform('texture', WebGLShader.TEXTURE2D, WebGLShader.FRAGMENT)
+            .addUniform(BN.texture, WebGLShader.TEXTURE2D, WebGLShader.FRAGMENT)
             .addAttribute(AN.vertex, WebGLShader.VEC3)
             .addAttribute(AN.textureCoordinates, WebGLShader.VEC4)
             .addVarying('v_text_coords', WebGLShader.VEC4);
@@ -183,7 +183,7 @@ class WebGLShader extends Model.Shader {
                   v_text_coords = ${AN.textureCoordinates};
             `);
         this.vertexReturnedValue = `vec4(${AN.vertex}, 1)`;
-        this.fragmentReturnedValue = `texture2D( texture, v_text_coords )`;
+        this.fragmentReturnedValue = `texture2D( ${BN.texture}, v_text_coords )`;
         return this;
     }
     useInterpolatedColor() {
@@ -213,10 +213,10 @@ class WebGLShader extends Model.Shader {
             return this;
         }
         this
-            .addUniform('displacement_map', WebGLShader.TEXTURE2D, WebGLShader.VERTEX)
+            .addUniform(BN.displacementMap, WebGLShader.TEXTURE2D, WebGLShader.VERTEX)
             .addUniform(UN.bumpScale, WebGLShader.FLOAT, WebGLShader.VERTEX);
         this.vCode.push(`
-                  float height = texture2D( displacement_map, ${AN.textureCoordinates} );
+                  float height = texture2D( ${BN.displacementMap}, ${AN.textureCoordinates} );
                   position.y += height * ${UN.bumpScale}; 
             `);
         return this;

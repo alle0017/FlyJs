@@ -306,13 +306,13 @@ type Point2D = {
 </tr>
 <tr>
       <td>
-            [ ] 
+            [x] 
       </td>
       <td>
             webgpu dynamic bindings definition ( create an array of all the bindings) 
       </td>
       <td>
-            on-going
+            done
       </td>
 </tr>
 <tr>
