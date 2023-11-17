@@ -317,7 +317,7 @@ type Point2D = {
 </tr>
 <tr>
       <td>
-            [x] 
+            :heavy_check_mark:
       </td>
       <td>
             webgpu uniforms
@@ -328,7 +328,6 @@ type Point2D = {
 </tr> 
 <tr>
       <td>
-            [ ] 
       </td>
       <td>
             webgl texture
@@ -339,7 +338,7 @@ type Point2D = {
 </tr>
 <tr>
       <td>
-            [x] 
+            :heavy_check_mark:
       </td>
       <td>
             webgl uniforms
@@ -350,7 +349,6 @@ type Point2D = {
 </tr>
 <tr>
       <td>
-            [ ] 
       </td>
       <td>
             implement lights
@@ -361,7 +359,6 @@ type Point2D = {
 </tr>
 <tr>
       <td>
-            [ ] 
       </td>
       <td>
             implement skeletal animations
@@ -372,7 +369,6 @@ type Point2D = {
 </tr>
 <tr>
       <td>
-            [ ] 
       </td>
       <td>
             implement a fallback system with possibility of require specific api for the renderer
