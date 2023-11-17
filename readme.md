@@ -27,8 +27,73 @@ SPRITE_3D --> SPRITE_2D
 EVENT_SYSTEM --> OBSERVABLE
 
 ```
-# RENDERER
+# FOLDER STRUCTURE
+```
+game library
+├─ .DS_Store
+├─ .vscode
+│  └─ settings.json
+├─ controller
+│  └─ loadData.ts
+├─ entities
+├─ icon.webp (test image)
+├─ index.d.ts (delete when vscode supports webgpu types)
+├─ index.html (test file)
+├─ main.ts (test file)
+├─ material for getting started.md
+├─ pipeline.jpg (test image)
+├─ prova.png (test image)
+├─ readme.md
+├─ rendering
+│  ├─ .DS_Store
+│  ├─ GLRenderer.ts
+│  ├─ GPURenderer.ts
+│  ├─ codeDelegates
+│  │  ├─ GLcode.ts
+│  │  └─ GPUcode.ts
+│  ├─ matrix
+│  │  ├─ camera.ts
+│  │  ├─ matrices.ts
+│  │  └─ viewMatrix.ts
+│  ├─ programSetterDelegate.ts
+│  ├─ rendererModel.ts
+│  ├─ shaders
+│  │  ├─ GLShaders.ts
+│  │  ├─ GPUShader.ts
+│  │  └─ shaderModel.ts
+│  ├─ shapes.ts
+│  ├─ tree.ts
+│  └─ types.ts
+├─ src
+│  ├─ controller
+│  │  └─ loadData.js
+│  ├─ entities
+│  │  └─ entity.js
+│  ├─ main.js
+│  └─ rendering
+│     ├─ GLRenderer.js
+│     ├─ GPUrenderer.js
+│     ├─ codeDelegates
+│     │  ├─ GLcode.js
+│     │  └─ GPUcode.js
+│     ├─ generics.js
+│     ├─ matrix
+│     │  ├─ camera.js
+│     │  ├─ matrices.js
+│     │  └─ viewMatrix.js
+│     ├─ programSetterDelegate.js
+│     ├─ rendererModel.js
+│     ├─ shaders
+│     │  ├─ GLShaders.js
+│     │  ├─ GPUShader.js
+│     │  └─ shaderModel.js
+│     ├─ shapes.js
+│     ├─ tree.js
+│     └─ types.js
+├─ tsconfig.json 
+└─ vertex.txt (old data)
 
+```
 ## TABLE OF CONTENTS
 ##### RENDERER METHODS
 -[append](#append)\
@@ -43,6 +108,7 @@ EVENT_SYSTEM --> OBSERVABLE
 -[Next step](#next-steps)\
 -[Documentation](#documentation)
 
+## RENDERER METHODS
 ``` typescript
 import { Shapes } from './rendering/shapes.js';
 import { Renderer } from './rendering/GPURenderer.js'; // './rendering/GLRenderer.js'; 
@@ -96,7 +162,7 @@ draw(): void;
 ```
 \
 draw all the objects actually attached to the renderer
-
+## TYPES
 ### DrawOpt 
 ``` typescript
 type DrawOpt = {
