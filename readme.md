@@ -4,6 +4,27 @@ This engine is all open source, feel free to take it, change it and use it as yo
 
 this engine is intended to be more like a library, very lightweight, without the use of any additional external libraries. Also, the engine's purpose is to be beginner friendly, something like **microsoft make code arcade** ([see here](https://arcade.makecode.com/)). This repository is intended to be either a documentation and a sort of book of journeys ([check here](https://github.com/alle0017/game-library/blob/main/material%20for%20getting%20started.md)), for the once who wants to learn how to program an engine, from how webgl and webgpu works to the game algorithms.
 
+# TABLE OF CONTENTS
+### ARCHITECTURE 
+-[architecture](#architecture-idea)
+### PROJECT TREE
+-[tree](#folder-structure)
+### API
+##### RENDERER METHODS
+-[append](#append)\
+-[setAttributes](#setattributes)\
+-[remove](#remove)\
+-[draw](#draw)
+##### TYPES
+-[DrawOpt](#drawopt)\
+-[DrawableImageOptions](#drawableelementoptions)\
+-[Point3D](#point3d)\
+-[Point2D](#point2d)
+### NEXT STEPS
+-[Next step](#next-steps-1)
+### DOCUMENTATION
+-[Documentation](#documentation)
+
 # ARCHITECTURE IDEA
 ```mermaid
 graph TD;
@@ -94,19 +115,6 @@ game library
 └─ vertex.txt (old data)
 
 ```
-## TABLE OF CONTENTS
-##### RENDERER METHODS
--[append](#append)\
--[setAttributes](#setattributes)\
--[remove](#remove)\
--[draw](#draw)
-##### TYPES
--[DrawOpt](#drawopt)\
--[DrawableImageOptions](#drawableelementoptions)\
--[Point3D](#point3d)\
--[Point2D](#point2d)\
--[Next step](#next-steps)\
--[Documentation](#documentation)
 
 ## RENDERER METHODS
 ``` typescript
