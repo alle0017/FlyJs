@@ -295,7 +295,7 @@ type Point2D = {
 </tr>
 <tr>
       <td>
-            [x] 
+            :heavy_check_mark:
       </td>
       <td>
             webgpu texture
