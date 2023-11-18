@@ -1,18 +1,53 @@
 import { WebGL } from './codeDelegates/GLcode.js';
 import { ProgramMode, BufferDataType, BufferUsage, Primitives, RendererErrorType, } from './types.js';
 import { ProgramSetterDelegate, } from "./programSetterDelegate.js";
-import { UniformsName as UN } from './shaders/shaderModel.js';
+import { UniformsName as UN, BindingsName as BN } from './shaders/shaderModel.js';
 import { ViewDelegate } from './matrix/viewMatrix.js';
 export class Renderer extends WebGL {
+    get culling() {
+        return this._culling;
+    }
+    set culling(value) {
+        if (value === this._culling)
+            return;
+        if (value) {
+            this.gl.enable(this.gl.CULL_FACE);
+            this.gl.cullFace(this.gl.FRONT_AND_BACK);
+        }
+        else {
+            this.gl.disable(this.gl.CULL_FACE);
+        }
+    }
+    get clearColor() {
+        return this._clearColor;
+    }
+    set clearColor(value) {
+        if (this._clearColor.r === value.r ||
+            this._clearColor.g === value.g ||
+            this._clearColor.b === value.b ||
+            this._clearColor.a === value.a)
+            return;
+        this._clearColor = value;
+        this.gl.clearColor(value.r, value.g, value.b, value.a);
+    }
     constructor(cvs) {
         super(cvs);
         this.objects = new Map();
+        this._clearColor = { r: 0, g: 0, b: 0, a: 1 };
+        this._culling = false;
         this.view = new ViewDelegate(cvs.width / cvs.height);
     }
     async init() {
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.depthFunc(this.gl.LESS);
         return this;
+    }
+    setIndexArray(vertices, primitive) {
+        const count = this.getPrimitivesVertexCount(primitive);
+        const indices = [];
+        for (let i = 0; i < vertices / count; i++)
+            indices.push(i);
+        return indices;
     }
     createRenderFunction(opt) {
         const defaultRenderFunc = () => {
@@ -32,10 +67,18 @@ export class Renderer extends WebGL {
             };
         const uniforms = (drawOpt) => {
             const uniformsData = this.getUniformsData(drawOpt, opt.objOpt);
+            let i = 0;
             for (let [key, value] of opt.locations.entries()) {
                 const bufferData = opt.uniforms.get(key);
+                const texture = key in BN ? opt.textures.get(key) : undefined;
                 if (bufferData && uniformsData[key])
                     this.setUniforms(bufferData, value, uniformsData[key]);
+                else if (texture && `TEXTURE${i}` in this.gl) {
+                    this.gl.uniform1i(value, i);
+                    this.gl.activeTexture(this.gl[`TEXTURE${i}`]);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+                    i++;
+                }
             }
         };
         return (drawOpt) => {
@@ -93,7 +136,51 @@ export class Renderer extends WebGL {
         }
         return obj;
     }
-    create(opt) {
+    createTexture(name, opt) {
+        let img;
+        if (name === BN.displacementMap && opt.displacementMap)
+            img = opt.displacementMap;
+        else if (name === BN.texture)
+            img = opt.image;
+        else {
+            this.error(`texture (${name} for texture is not defined in WebGL)`, RendererErrorType.creation);
+        }
+        const texture = this.gl.createTexture();
+        if (!texture)
+            this.error('texture', RendererErrorType.creation);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, img);
+        return texture;
+    }
+    createVertexBuffers(program, vertexBuffers, attributes, attributesData) {
+        for (let [key, arr] of attributesData.entries()) {
+            vertexBuffers.set(key, this.createBuffer({
+                data: arr,
+            }));
+            if (attributes.has(key))
+                attributes.get(key).shaderLocation = this.gl.getAttribLocation(program, key);
+            else
+                this.error(`buffer ${key}`, RendererErrorType.initialization);
+        }
+    }
+    setUniformsLocations(program, uniforms, locations, imageData) {
+        const textures = new Map();
+        for (const key of uniforms.keys()) {
+            const loc = this.gl.getUniformLocation(program, key);
+            if (!loc)
+                this.error('uniform location', RendererErrorType.acquisition);
+            locations.set(key, loc);
+            if (key in BN && imageData) { // enums generates also values as key
+                textures.set(key, this.createTexture(key, imageData));
+            }
+        }
+        return textures;
+    }
+    setProgramAttributes(opt) {
         const data = ProgramSetterDelegate.getProperties(opt, ProgramMode.webgl, false);
         const program = this.createProgram({
             vShader: data.vertex,
@@ -102,20 +189,9 @@ export class Renderer extends WebGL {
             stride: 0,
         });
         const vertexBuffers = new Map();
-        for (let [key, arr] of data.attributesData.entries()) {
-            vertexBuffers.set(key, this.createBuffer({
-                data: arr,
-            }));
-            if (data.attributes.has(key))
-                data.attributes.get(key).shaderLocation = this.gl.getAttribLocation(program, key);
-            else
-                this.error(`buffer ${key}`, RendererErrorType.initialization);
-        }
+        this.createVertexBuffers(program, vertexBuffers, data.attributes, data.attributesData);
         if (!opt.indices) {
-            const count = this.getPrimitivesVertexCount(Primitives.triangles);
-            opt.indices = [];
-            for (let i = 0; i < opt.vertices.length / count; i++)
-                opt.indices.push(i);
+            opt.indices = this.setIndexArray(opt.vertices.length, opt.primitive || Primitives.triangles);
         }
         const indexBuffer = this.createBuffer({
             data: opt.indices,
@@ -123,15 +199,10 @@ export class Renderer extends WebGL {
             usage: BufferUsage.index,
         });
         const locations = new Map();
-        for (const key of data.uniforms.keys()) {
-            const loc = this.gl.getUniformLocation(program, key);
-            if (!loc)
-                this.error('uniform location', RendererErrorType.acquisition);
-            locations.set(key, loc);
-        }
+        const textures = this.setUniformsLocations(program, data.uniforms, locations, opt.imageData);
         const primitive = this.getPrimitive(Primitives.triangles);
         const N_OF_VERTICES = opt.indices.length;
-        return this.createRenderFunction({
+        return {
             N_OF_VERTICES,
             program,
             vertexBuffers,
@@ -140,8 +211,11 @@ export class Renderer extends WebGL {
             uniforms: data.uniforms,
             primitive,
             indexBuffer,
-            objOpt: opt
-        });
+            textures
+        };
+    }
+    create(opt) {
+        return this.createRenderFunction(Object.assign(Object.assign({}, this.setProgramAttributes(opt)), { objOpt: opt }));
     }
     append(name, func) {
         this.objects.set(name, {

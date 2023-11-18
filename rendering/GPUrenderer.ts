@@ -5,13 +5,17 @@ import { UniformsName as UN, BindingsName as BN } from './shaders/shaderModel.js
 import * as Types from './types.js';
 import { UNIFORM } from "./shaders/GPUShader.js";
 
-
+type UniformInformation = { 
+      buffer: GPUBuffer | undefined, 
+      bindGroup: GPUBindGroup, 
+      data: Float32Array, 
+} 
 type WebGPURenderFunctionData = {
       pipeline: GPURenderPipeline,
       vertexBuffer: GPUBuffer,
       N_OF_VERTICES: number,
       indexBuffer: GPUBuffer,
-      uniforms: { buffer: GPUBuffer | undefined, bindGroup: GPUBindGroup, data: Float32Array, } | undefined,
+      uniforms?: UniformInformation,
       perspective: boolean,
       oldData: Types.DrawOpt,
       uniformsName: string[],
@@ -19,6 +23,7 @@ type WebGPURenderFunctionData = {
 type UniformsSetterFunction = {
       [ T in UN ]: ()=>void; 
 }
+
 
 export class Renderer extends WebGPU { 
 
@@ -35,6 +40,13 @@ export class Renderer extends WebGPU {
             await super.init();
             this.renderPassDescriptor = this.createRenderPassDescriptor( true );
             return this;
+      }
+      private setIndexArray( vertices: number, primitive: Types.Primitives ): number[]{
+            const count = this.getPrimitivesVertexCount( primitive );
+            const indices: number[] = [];
+            for( let i = 0; i < vertices/count; i++ )
+                  indices.push(i);
+            return indices;
       }
       private createRenderFunction( opt: WebGPURenderFunctionData ): Types.RenderFunction {
             const defaultRenderFunc = ( pass: GPURenderPassEncoder )=>{
@@ -156,9 +168,7 @@ export class Renderer extends WebGPU {
                   data: new Float32Array([]),
             }
       }
-
-      create( opt: Types.DrawableElementAttributes ): Types.RenderFunction {
-
+      private setProgramAttributes( opt: Types.DrawableElementAttributes ){
             const data = ProgramSetterDelegate.getProperties( opt, Types.ProgramMode.webgpu );
             const pipeline = this.createPipeline({
                   vShader: data.vertex,
@@ -173,10 +183,10 @@ export class Renderer extends WebGPU {
                         label: 'vertex buffer',
             });
             if( !opt.indices ){
-                  const count = this.getPrimitivesVertexCount( Types.Primitives.triangles );
-                  opt.indices = [];
-                  for( let i = 0; i < opt.vertices.length/count; i++ )
-                        opt.indices.push(i);
+                  opt.indices = this.setIndexArray( 
+                        opt.vertices.length, 
+                        opt.primitive || Types.Primitives.triangles
+                  )
             }
             const N_OF_VERTICES = opt.indices.length;
             
@@ -186,23 +196,23 @@ export class Renderer extends WebGPU {
                   label: 'index buffer',
                   usage: Types.BufferUsage.index
             });
-            let uniforms: { buffer: GPUBuffer | undefined, bindGroup: GPUBindGroup, data: Float32Array, } | undefined;
+            let uniforms: UniformInformation | undefined;
             if( data.bindings && data.bindings.length > 0 )
                   uniforms = this.setUniforms( pipeline, data.uniformStride, data.bindings!, opt.imageData );
-            let perspective = false;
-            if( opt.perspective ){
-                  perspective = true;
-            }
-            let oldData: Types.DrawOpt = {};
-            return this.createRenderFunction({
+            return {
                   pipeline,
                   vertexBuffer,
                   N_OF_VERTICES,
                   indexBuffer,
                   uniforms,
-                  perspective,
-                  oldData,
                   uniformsName: data.uniformsName,
+            }
+      }
+      create( opt: Types.DrawableElementAttributes ): Types.RenderFunction {
+            return this.createRenderFunction({
+                  ...this.setProgramAttributes( opt ),
+                  perspective: opt.perspective || false,
+                  oldData: {},
             });
       }
       append( name: string, func: Types.RenderFunction ): this {

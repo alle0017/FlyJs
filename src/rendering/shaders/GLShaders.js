@@ -27,6 +27,7 @@ class WebGLShader extends Model.Shader {
         this.typeSize[this.MAT3x3] = { type: 'mat3', components: 9, size: 4 };
         this.typeSize[this.MAT2x2] = { type: 'mat2', components: 4, size: 4 };
         this.typeSize[this.MAT3x2] = { type: 'mat3x2', components: 6, size: 4 };
+        this.typeSize[WebGLShader.TEXTURE2D] = { type: 'sampler2D', components: 0, size: 0 };
     }
     getType(type) {
         if (!WebGLShader.types[type])
@@ -177,8 +178,8 @@ class WebGLShader extends Model.Shader {
             .resetVariables()
             .addUniform(BN.texture, WebGLShader.TEXTURE2D, WebGLShader.FRAGMENT)
             .addAttribute(AN.vertex, WebGLShader.VEC3)
-            .addAttribute(AN.textureCoordinates, WebGLShader.VEC4)
-            .addVarying('v_text_coords', WebGLShader.VEC4);
+            .addAttribute(AN.textureCoordinates, WebGLShader.VEC2)
+            .addVarying('v_text_coords', WebGLShader.VEC2);
         this.vCode.push(`
                   v_text_coords = ${AN.textureCoordinates};
             `);

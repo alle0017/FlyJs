@@ -10,10 +10,11 @@ import {
       BufferData,
       DrawOpt,
       Renderable,
-      GPUCodeProperties,
+      Color,
+      DrawableImageOptions,
  } from './types.js';
 import { ProgramSetterDelegate, } from "./programSetterDelegate.js";
-import { UniformsName as UN } from './shaders/shaderModel.js';
+import { UniformsName as UN, BindingsName as BN } from './shaders/shaderModel.js';
 import { ViewDelegate } from './matrix/viewMatrix.js';
 
 type UniformsData = {
@@ -29,12 +30,49 @@ type WebGLRenderFunctionData = {
       primitive: number,
       indexBuffer: WebGLBuffer,
       objOpt: DrawableElementAttributes,
+      textures: Map<BN, WebGLTexture>;
 }
+type AcceptedNumbers = 
+0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 
+| 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 
+21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31
+type TextureAttributeName = `TEXTURE${AcceptedNumbers}`;
 export class Renderer extends WebGL { 
 
       protected objects: Map<string,Renderable> = new Map<string,Renderable>();
       protected renderPassDescriptor?: GPURenderPassDescriptor;
       private view: ViewDelegate;
+
+      private _clearColor: Color = { r: 0, g: 0, b: 0, a: 1 };
+
+      private _culling: boolean = false;
+
+      get culling(): boolean {
+            return this._culling;
+      }
+      set culling( value: boolean ){
+            if( value === this._culling )
+                  return;
+            if( value ){
+                  this.gl.enable( this.gl.CULL_FACE );
+                  this.gl.cullFace( this.gl.FRONT_AND_BACK );
+            }else{
+                  this.gl.disable( this.gl.CULL_FACE );
+            }
+      }
+      get clearColor(): Color {
+            return this._clearColor;
+      }
+      set clearColor( value: Color ){
+            if( 
+                  this._clearColor.r === value.r || 
+                  this._clearColor.g === value.g ||
+                  this._clearColor.b === value.b || 
+                  this._clearColor.a === value.a
+                  ) return;
+            this._clearColor = value;
+            this.gl.clearColor( value.r, value.g, value.b, value.a );
+      }
 
       constructor( cvs: HTMLCanvasElement ){
             super( cvs );
@@ -44,6 +82,13 @@ export class Renderer extends WebGL {
             this.gl.enable( this.gl.DEPTH_TEST );
             this.gl.depthFunc( this.gl.LESS );
             return this;
+      }
+      private setIndexArray( vertices: number, primitive: Primitives ): number[]{
+            const count = this.getPrimitivesVertexCount( primitive );
+            const indices: number[] = [];
+            for( let i = 0; i < vertices/count; i++ )
+                  indices.push(i);
+            return indices;
       }
       private createRenderFunction( opt: WebGLRenderFunctionData ): RenderFunction {
             const defaultRenderFunc = () =>{
@@ -67,10 +112,18 @@ export class Renderer extends WebGL {
                   }
             const uniforms = ( drawOpt?: DrawOpt )=>{
                   const uniformsData = this.getUniformsData( drawOpt, opt.objOpt );
+                  let i = 0;
                   for( let [key, value] of opt.locations.entries() ){
                         const bufferData = opt.uniforms.get( key );
+                        const texture = key in BN? opt.textures.get( key as BN ): undefined;
                         if( bufferData && uniformsData[key as UN] )
                               this.setUniforms( bufferData , value, uniformsData[key as UN]! );
+                        else if( texture && `TEXTURE${i}` in this.gl ){
+                              this.gl.uniform1i( value , i );
+                              this.gl.activeTexture( this.gl[ `TEXTURE${i}` as TextureAttributeName ] );
+                              this.gl.bindTexture(this.gl.TEXTURE_2D, texture );
+                              i++;
+                        }
                   }
             }
             return ( drawOpt?: DrawOpt )=>{
@@ -126,8 +179,69 @@ export class Renderer extends WebGL {
             }
             return obj;
       }
-      create( opt: DrawableElementAttributes ): RenderFunction {
+      private createTexture( name: BN, opt: DrawableImageOptions ): WebGLTexture {
+            let img: ImageBitmap;
+            if( name === BN.displacementMap && opt.displacementMap )
+                  img = opt.displacementMap;
+            else if( name === BN.texture )
+                  img = opt.image;
+            else{
+                  this.error( `texture (${name} for texture is not defined in WebGL)`, RendererErrorType.creation );
+            }
+            const texture = this.gl.createTexture() as WebGLTexture;
+            if( !texture )
+                  this.error( 'texture', RendererErrorType.creation );
+            
+            this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
 
+            this.gl.texImage2D( 
+                  this.gl.TEXTURE_2D, 
+                  0, 
+                  this.gl.RGBA, 
+                  this.gl.RGBA, 
+                  this.gl.UNSIGNED_BYTE, 
+                  img! as ImageBitmap
+            );
+            return texture;
+      }
+      private createVertexBuffers( program: WebGLProgram, vertexBuffers: Map<string, WebGLBuffer>, attributes: Map<string, BufferData>, attributesData: Map<string, number[]>  ){
+            for( let [ key, arr ] of attributesData.entries() ){
+                  vertexBuffers.set( key, this.createBuffer({
+                        data: arr,
+                  }) );
+                  if( attributes.has( key ) )
+                        attributes.get( key )!.shaderLocation = this.gl.getAttribLocation( program, key );
+                  else 
+                        this.error( `buffer ${key}`, RendererErrorType.initialization );
+            }
+      }
+      private setUniformsLocations( 
+            program: WebGLProgram, 
+            uniforms: Map<string, BufferData>, 
+            locations: Map<string,WebGLUniformLocation>, 
+            imageData?: DrawableImageOptions ): Map<BN, WebGLTexture>{
+
+            const textures: Map<BN, WebGLTexture> = new Map<BN, WebGLTexture>();
+            for( const key of uniforms.keys() ){
+                  const loc = this.gl.getUniformLocation( program, key ) as WebGLUniformLocation;
+                  if( !loc )
+                        this.error( 'uniform location',RendererErrorType.acquisition );
+                  locations.set( key, loc );
+                  if( key in BN && imageData ){ // enums generates also values as key
+                        textures.set(
+                              key as BN,
+                              this.createTexture( key as BN, imageData )
+                        );
+                  }
+            }
+            return textures;
+      }
+
+      private setProgramAttributes( opt: DrawableElementAttributes ){
             const data = ProgramSetterDelegate.getProperties( opt, ProgramMode.webgl, false );
             const program = this.createProgram( {
                   vShader: data.vertex,
@@ -136,20 +250,17 @@ export class Renderer extends WebGL {
                   stride: 0,
             });
             const vertexBuffers: Map<string,WebGLBuffer> = new Map<string,WebGLBuffer>();
-            for( let [ key, arr ] of data.attributesData.entries() ){
-                  vertexBuffers.set( key, this.createBuffer({
-                        data: arr,
-                  }) );
-                  if( data.attributes.has( key ) )
-                        data.attributes.get( key )!.shaderLocation = this.gl.getAttribLocation( program, key );
-                  else 
-                        this.error( `buffer ${key}`, RendererErrorType.initialization );
-            }
+            this.createVertexBuffers( 
+                  program, 
+                  vertexBuffers,
+                  data.attributes,
+                  data.attributesData
+            );
             if( !opt.indices ){
-                  const count = this.getPrimitivesVertexCount( Primitives.triangles );
-                  opt.indices = [];
-                  for( let i = 0; i < opt.vertices.length/count; i++ )
-                        opt.indices.push(i);
+                  opt.indices = this.setIndexArray( 
+                        opt.vertices.length, 
+                        opt.primitive || Primitives.triangles
+                  )
             }
             const indexBuffer = this.createBuffer({
                   data: opt.indices,
@@ -157,16 +268,10 @@ export class Renderer extends WebGL {
                   usage: BufferUsage.index,
             })
             const locations: Map<string,WebGLUniformLocation> = new Map<string,WebGLUniformLocation>();
-            for( const key of data.uniforms.keys() ){
-                  const loc = this.gl.getUniformLocation( program, key ) as WebGLUniformLocation;
-                  if( !loc )
-                        this.error( 'uniform location',RendererErrorType.acquisition );
-                  locations.set( key, loc );
-            }
+            const textures: Map<BN, WebGLTexture> = this.setUniformsLocations( program, data.uniforms, locations, opt.imageData );
             const primitive = this.getPrimitive( Primitives.triangles );
             const N_OF_VERTICES = opt.indices.length;
-
-            return this.createRenderFunction({
+            return {
                   N_OF_VERTICES,
                   program,
                   vertexBuffers,
@@ -175,7 +280,13 @@ export class Renderer extends WebGL {
                   uniforms: data.uniforms,
                   primitive,
                   indexBuffer,
-                  objOpt: opt
+                  textures
+            }
+      }
+      create( opt: DrawableElementAttributes ): RenderFunction {
+            return this.createRenderFunction({
+                  ...this.setProgramAttributes( opt ),
+                  objOpt: opt,
             });
       }
       append( name: string, func: RenderFunction ): this {

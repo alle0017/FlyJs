@@ -31,6 +31,13 @@ export class WebGPU extends Model.Renderer {
 
       private _antialias: number = 4;
 
+      clearColor: Types.Color = {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 1
+      }
+
       get culling(): boolean { return this._culling; }
       set culling( value: boolean ) {
             this._culling = value;
@@ -224,7 +231,7 @@ export class WebGPU extends Model.Renderer {
             const description: GPURenderPassDescriptor = {
                   colorAttachments: [{
                         view: this.ctx.getCurrentTexture().createView(),
-                        clearValue: { r: 1, g: 0, b: 0, a: 1 }, //background color
+                        clearValue: this.clearColor, //background color
                         loadOp: 'clear',
                         storeOp: 'store'
                   }],

@@ -15,6 +15,13 @@ export class Renderer extends WebGPU {
         this.renderPassDescriptor = this.createRenderPassDescriptor(true);
         return this;
     }
+    setIndexArray(vertices, primitive) {
+        const count = this.getPrimitivesVertexCount(primitive);
+        const indices = [];
+        for (let i = 0; i < vertices / count; i++)
+            indices.push(i);
+        return indices;
+    }
     createRenderFunction(opt) {
         const defaultRenderFunc = (pass) => {
             pass.setIndexBuffer(opt.indexBuffer, 'uint16');
@@ -133,7 +140,7 @@ export class Renderer extends WebGPU {
             data: new Float32Array([]),
         };
     }
-    create(opt) {
+    setProgramAttributes(opt) {
         const data = ProgramSetterDelegate.getProperties(opt, Types.ProgramMode.webgpu);
         const pipeline = this.createPipeline({
             vShader: data.vertex,
@@ -148,10 +155,7 @@ export class Renderer extends WebGPU {
             label: 'vertex buffer',
         });
         if (!opt.indices) {
-            const count = this.getPrimitivesVertexCount(Types.Primitives.triangles);
-            opt.indices = [];
-            for (let i = 0; i < opt.vertices.length / count; i++)
-                opt.indices.push(i);
+            opt.indices = this.setIndexArray(opt.vertices.length, opt.primitive || Types.Primitives.triangles);
         }
         const N_OF_VERTICES = opt.indices.length;
         const indexBuffer = this.createBuffer({
@@ -163,21 +167,17 @@ export class Renderer extends WebGPU {
         let uniforms;
         if (data.bindings && data.bindings.length > 0)
             uniforms = this.setUniforms(pipeline, data.uniformStride, data.bindings, opt.imageData);
-        let perspective = false;
-        if (opt.perspective) {
-            perspective = true;
-        }
-        let oldData = {};
-        return this.createRenderFunction({
+        return {
             pipeline,
             vertexBuffer,
             N_OF_VERTICES,
             indexBuffer,
             uniforms,
-            perspective,
-            oldData,
             uniformsName: data.uniformsName,
-        });
+        };
+    }
+    create(opt) {
+        return this.createRenderFunction(Object.assign(Object.assign({}, this.setProgramAttributes(opt)), { perspective: opt.perspective || false, oldData: {} }));
     }
     append(name, func) {
         this.objects.set(name, {

@@ -7,6 +7,7 @@ type DrawableElementOptions = {
       static: boolean;
       perspective: boolean;
       imageData: DrawableImageOptions;
+      primitive?: Primitives;
 };
 type DrawableElementEssential = {
       vertices: number[];

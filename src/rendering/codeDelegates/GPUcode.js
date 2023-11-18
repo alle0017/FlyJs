@@ -19,6 +19,12 @@ export class WebGPU extends Model.Renderer {
         this.cvs = cvs;
         this._culling = false;
         this._antialias = 4;
+        this.clearColor = {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 1
+        };
         this.ctx = this.cvs.getContext('webgpu');
         if (!this.ctx)
             this.error('context', Types.RendererErrorType.acquisition);
@@ -195,7 +201,7 @@ export class WebGPU extends Model.Renderer {
         const description = {
             colorAttachments: [{
                     view: this.ctx.getCurrentTexture().createView(),
-                    clearValue: { r: 1, g: 0, b: 0, a: 1 },
+                    clearValue: this.clearColor,
                     loadOp: 'clear',
                     storeOp: 'store'
                 }],

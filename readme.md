@@ -328,12 +328,13 @@ type Point2D = {
 </tr> 
 <tr>
       <td>
+            :heavy_check_mark:
       </td>
       <td>
             webgl texture
       </td>
       <td>
-            on-going
+            done
       </td>
 </tr>
 <tr>
