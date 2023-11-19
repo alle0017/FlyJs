@@ -24,6 +24,11 @@ class WebGPUShader extends Model.Shader {
         this.DEFAULT_VERTEX_RETURNED_VALUE = `vec4f(${this.ATTRIBUTES_VARIABLE}.${AN.vertex}, 1)`;
         this.attribOffset = 0;
         this.uniformOffset = 0;
+        this.skinningFunction = `
+      fn skinning(  )-> void {
+
+      }
+      `;
     }
     addAttributesInfo(name, type, bindingLocation) {
         const typeInfo = WebGPUShader.typeSize[type] ?

@@ -21,6 +21,7 @@ export enum UniformsName {
       transformation = 'transformation',
       bumpScale = 'bump_scale',
       framePosition = 'frame_position',
+      //bones
 }
 export enum BindingsName {
       texture = 'texture',

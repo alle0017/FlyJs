@@ -508,7 +508,7 @@ type Point2D = {
             implement skeletal animations
       </td>
       <td>
-            coming soon
+            on-going
       </td>
 </tr>
 <tr>

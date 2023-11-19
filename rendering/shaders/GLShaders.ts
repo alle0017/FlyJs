@@ -6,6 +6,22 @@ export class WebGLShader extends Model.Shader {
       protected static typeSize: Model.TypeInfos[] = [];
       protected fragmentUniforms: string[] = [];
 
+      private readonly skinningFunction: string = /*glsl*/`
+      mat4 skinning( vec4 weights, vec4 indices ) {
+      
+            mat4 m = mat4(
+                  0, 0, 0, 0,
+                  0, 0, 0, 0,
+                  0, 0, 0, 0,
+                  0, 0, 0, 0
+                  );
+            for( int i = 0; i < 4; i++ ) {
+                  m+= bones[ int(indices[i]) ]*weights[i];
+            }
+            return m;
+      }
+      `;
+
       static setTypes(){
             this.types[WebGLShader.MAT4x4] = 'mat4';
             this.types[WebGLShader.MAT3x3] = 'mat3';

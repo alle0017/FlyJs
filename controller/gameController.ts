@@ -3,6 +3,7 @@ import { Renderer as WebGPURenderer } from '../rendering/GPURenderer.js';
 import { DrawableElementAttributes, RenderFunction, DrawOpt, Color,  } from '../rendering/types.js';
 import { Debug } from './debug.js';
 
+// TODO: add instanceOnGPU method => call the RenderFunction one time and pass the encoder
 interface Renderer {
       clearColor: Color;
       culling: boolean;

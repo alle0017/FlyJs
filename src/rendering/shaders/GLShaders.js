@@ -4,6 +4,17 @@ class WebGLShader extends Model.Shader {
     constructor() {
         super(...arguments);
         this.fragmentUniforms = [];
+        this.skinningFunction = `
+      void skinning( inout vec4 pos, vec4 weights, vec4 indices ) {
+            if( any( weights ) ) {
+                  mat4 m = 0;
+                  for( int i = 0; i < 4; i++ ) {
+                        m += (bones[ indices[i] ]* weights[i]).xyz;
+                  }
+                  pos = mul( m, pos );
+            }
+      }
+      `;
     }
     static setTypes() {
         this.types[WebGLShader.MAT4x4] = 'mat4';

@@ -32,6 +32,22 @@ export class WebGPUShader extends Model.Shader {
 
       protected static typeSize: Model.TypeInfos[] = [];
 
+      private readonly skinningFunction: string = /* wgsl */`
+
+      fn skinning( indices: vec4i, weights: vec4f ) -> mat4x4f {
+            var m: mat4x4f = mat4x4f(
+                  vec4f(0, 0, 0, 0),
+                  vec4f(0, 0, 0, 0),
+                  vec4f(0, 0, 0, 0),
+                  vec4f(0, 0, 0, 0)
+            );
+            for( var i = 0; i < 4; i++ ){
+                  m += bones[indices[i]]*weights[i];
+           }
+           return m;
+      }
+      `;
+
 
       protected addAttributesInfo( name: string, type: number, bindingLocation: number ): void {  
 
