@@ -70,13 +70,24 @@ const image = game.renderer.create({
         1, -1, 0,
         1, 1, 0,
     ],
-    color,
+    imageData: {
+        image: img,
+        textureCoords: [
+            1, 1,
+            0, 1,
+            0, 0,
+            1, 0,
+        ]
+    },
     perspective: true
 });
 game.renderer.append('img', image).setAttributes('img', {
     translation: { x: 0, y: 0, z: -5 },
     scale: 0.5
 });
+//game.debug.drawXYGrid();
+//game.debug.drawYZGrid();
+game.debug.drawXYGrid();
 const f = () => {
     game.renderer.draw();
     requestAnimationFrame(f);

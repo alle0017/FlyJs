@@ -10,11 +10,24 @@ this engine is intended to be more like a library, very lightweight, without the
 ### PROJECT TREE
 -[tree](#folder-structure)
 ### API
-##### RENDERER METHODS
+##### GAME CLASS
+-[get](#get)\
+-[debug](#debug-1)\
+-[renderer](#renderer-1)
+
+##### RENDERER
+-[interface](#interface)\
+-[clearColor](#clearcolor)\
+-[culling](#culling)\
 -[append](#append)\
 -[setAttributes](#setattributes)\
 -[remove](#remove)\
 -[draw](#draw)
+##### DEBUG
+-[drawXYGrid](#drawxygrid)\
+-[drawXZGrid](#drawxzgrid)\
+-[drawYZGrid](#drawyzgrid)\
+-[removeGrids](#removegrids)
 ##### TYPES
 -[DrawOpt](#drawopt)\
 -[DrawableImageOptions](#drawableelementoptions)\
@@ -55,15 +68,19 @@ game library
 ├─ .vscode
 │  └─ settings.json
 ├─ controller
-│  └─ loadData.ts
+│  ├─ canvasDelegate.ts
+│  ├─ debug.ts
+│  ├─ gameController.ts
+│  ├─ loadData.ts
+│  └─ loopController.ts
 ├─ entities
-├─ icon.webp (test image)
-├─ index.d.ts (delete when vscode supports webgpu types)
-├─ index.html (test file)
-├─ main.ts (test file)
+├─ icon.webp
+├─ index.d.ts
+├─ index.html
+├─ main.ts
 ├─ material for getting started.md
-├─ pipeline.jpg (test image)
-├─ prova.png (test image)
+├─ pipeline.jpg
+├─ prova.png
 ├─ readme.md
 ├─ rendering
 │  ├─ .DS_Store
@@ -87,7 +104,11 @@ game library
 │  └─ types.ts
 ├─ src
 │  ├─ controller
-│  │  └─ loadData.js
+│  │  ├─ canvasDelegate.js
+│  │  ├─ debug.js
+│  │  ├─ gameController.js
+│  │  ├─ loadData.js
+│  │  └─ loopController.js
 │  ├─ entities
 │  │  └─ entity.js
 │  ├─ main.js
@@ -111,12 +132,74 @@ game library
 │     ├─ shapes.js
 │     ├─ tree.js
 │     └─ types.js
-├─ tsconfig.json 
-└─ vertex.txt (old data)
+├─ tsconfig.json
+└─ vertex.txt
 
 ```
+## GAME CLASS
+``` typescript
+import { Load } from './controller/loadData.js';
+import { GameController } from './controller/gameController.js';
 
-## RENDERER METHODS
+
+const game = await GameController.get();
+const img = await Load.image( 'pipeline.jpg' );
+const image = game.renderer.create({
+      indices: [
+            0,1,2,
+            0,2,3,
+       ],
+      vertices: [ 
+            -1,  1, 0,
+            -1, -1, 0,
+            1, -1, 0,
+            1,  1, 0,
+      ],
+      imageData: {
+            image: img,
+            textureCoords: [
+
+                  1,  1,
+                  0,  1, 
+                  0, 0,
+                  1, 0, 
+            ]
+      },,
+      perspective: true
+})
+game.renderer.append( 'img', image ).setAttributes('img', { 
+      translation: {x: 0, y: 0, z: -5}, 
+      scale: 0.5
+})
+const f = ()=>{
+      game.renderer.draw();
+      requestAnimationFrame(f)
+}
+f();
+```
+
+### get
+``` typescript
+get(): Promise<GameController>
+```
+\
+this method returns the instance of the class (singleton). it creates (and append to the dom) the canvas in which all will be rendered
+
+### renderer
+``` typescript
+public readonly renderer: Renderer
+```
+\
+is used to create and draw objects ( see the example or [renderer methods](#renderer-methods-1)). can be an instance of WebGLRenderer or WebGPURenderer (if available)
+
+### debug
+``` typescript
+public readonly debug: Debug
+```
+\
+instance of class [Debug](#debug-2). it contains utility methods for debugging.
+
+## RENDERER
 ``` typescript
 import { Shapes } from './rendering/shapes.js';
 import { Renderer } from './rendering/GPURenderer.js'; // './rendering/GLRenderer.js'; 
@@ -136,6 +219,33 @@ const f = ()=>{
 }
 f();
 ```
+### interface
+```typescript
+interface Renderer {
+      clearColor: Color;
+      culling: boolean;
+      init(): Promise<Renderer>;
+      create( opt: DrawableElementAttributes ): RenderFunction;
+      append( name: string, func: RenderFunction ): Renderer;
+      remove( name: string ): RenderFunction | undefined;
+      setAttributes( name: string, attributes: DrawOpt ): Renderer;
+      draw(): void;
+}
+```
+### clearColor
+```typescript
+public clearColor: Color;
+```
+\
+color used to clear the screen
+
+### culling
+```typescript
+public culling: boolean;
+```
+\
+set culling if enabled
+
 ### create
 ``` typescript
 create( DrawableElementAttributes ): RenderFunction
@@ -170,6 +280,39 @@ draw(): void;
 ```
 \
 draw all the objects actually attached to the renderer
+## DEBUG
+``` typescript
+constructor( GameController ): Debug
+```
+
+### drawXYGrid
+``` typescript
+drawXYGrid( Color ): void
+```
+\
+draw a grid of the color specified (default to red) parallel to the z axis
+
+### drawXZGrid
+``` typescript
+drawXZGrid( Color ): void
+```
+\
+draw a grid of the color specified (default to red) parallel to the y axis
+
+### drawYZGrid
+``` typescript
+drawYZGrid( Color ): void
+```
+\
+draw a grid of the color specified (default to red) parallel to the x axis
+
+### removeGrids
+```typescript
+removeGrids(): void
+```
+\
+remove all the grids currently on the screen
+
 ## TYPES
 ### DrawOpt 
 ``` typescript
