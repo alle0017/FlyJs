@@ -70,18 +70,11 @@ const image = game.renderer.create({
         1, -1, 0,
         1, 1, 0,
     ],
-    imageData: {
-        image: img,
-        textureCoords: [
-            1, 1,
-            0, 1,
-            0, 0,
-            1, 0,
-        ]
-    },
+    color,
+    perspective: true
 });
 game.renderer.append('img', image).setAttributes('img', {
-    translation: { x: 0, y: 0, z: 0 },
+    translation: { x: 0, y: 0, z: -5 },
     scale: 0.5
 });
 const f = () => {

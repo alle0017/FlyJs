@@ -2,6 +2,7 @@ import { Renderer } from './rendering/GLRenderer.js';
 import { Load } from './controller/loadData.js';
 import { GameController } from './controller/gameController.js';
 
+
 const game = await GameController.get();
 
 const color =  [
@@ -86,19 +87,11 @@ const image = game.renderer.create({
             1, -1, 0,
             1,  1, 0,
       ],
-      imageData: {
-            image: img,
-            textureCoords: [
-
-                  1,  1,
-                  0,  1, 
-                  0, 0,
-                  1, 0, 
-            ]
-      },
+      color,
+      perspective: true
 })
 game.renderer.append( 'img', image ).setAttributes('img', { 
-      translation: {x: 0, y: 0, z: 0}, 
+      translation: {x: 0, y: 0, z: -5}, 
       scale: 0.5
 })
 const f = ()=>{

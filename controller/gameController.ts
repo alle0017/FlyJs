@@ -1,6 +1,7 @@
 import { Renderer as WebGLRenderer } from '../rendering/GLRenderer.js'
 import { Renderer as WebGPURenderer } from '../rendering/GPURenderer.js';
 import { DrawableElementAttributes, RenderFunction, DrawOpt, Color,  } from '../rendering/types.js';
+import { Debug } from './debug.js';
 
 interface Renderer {
       clearColor: Color;
@@ -15,6 +16,7 @@ interface Renderer {
 export class GameController {
       private static game: GameController;
       readonly renderer: Renderer;
+      readonly debug: Debug;
       cvs: HTMLCanvasElement;
       private constructor(){
             this.cvs = document.createElement('canvas') as HTMLCanvasElement;
@@ -27,6 +29,7 @@ export class GameController {
                   this.renderer = new WebGPURenderer( this.cvs );
             else
                   this.renderer = new WebGLRenderer( this.cvs );
+            this.debug = new Debug( this );
       }
       static async get(): Promise<GameController> {
             if( !GameController.game ){

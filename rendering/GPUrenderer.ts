@@ -176,6 +176,7 @@ export class Renderer extends WebGPU {
                   buffers: [...data.attributes.values()],
                   stride: data.attributeStride,
                   enableDepth: true,
+                  topology: opt.primitive || Types.Primitives.triangles
             });
             const vertexBuffer = this.createBuffer({
                         data: data.unifiedAttributeBuffer,
