@@ -5,7 +5,7 @@ export type ProgramInfo = {
       vertex: string; 
       attributes: Map<string, Types.BufferData>;
       uniforms: Map<string, Types.BufferData>;
-      bindings?: {type: string, name: string}[];
+      bindings?: string[];
       attributeStride: number;
       uniformStride: number;
       uniformsName: string[];
@@ -15,6 +15,8 @@ export enum AttributesName {
       vertex = 'vertex_position',
       color = 'color',
       textureCoordinates = 'texture_coords',
+      skIndices = 'sk_indices',
+      skWeights = 'weights',
 }
 export enum UniformsName {
       perspective = 'perspective',
@@ -27,6 +29,7 @@ export enum BindingsName {
       texture = 'texture',
       textureSampler = 'texture_sampler',
       displacementMap = 'displacement_map',
+      bones = 'bones',
 }
 export type TypeInfos = {
       type: string;
@@ -71,6 +74,8 @@ export abstract class Shader {
 
       protected _attributesData: Map<string,Types.BufferData> = new Map<string,Types.BufferData>();
       protected _uniformsData: Map<string,Types.BufferData> = new Map<string,Types.BufferData>();
+
+      protected _functions: string = '';
 
       constructor(){}     
 
@@ -117,7 +122,7 @@ export abstract class Shader {
       abstract useDisplacementMap(): this;
 
       /**@see https://veeenu.github.io/blog/implementing-skeletal-animation/ */
-      //TODO: abstract skeletalAnimation(): this;
+      abstract useSkeletalAnimation(  bones: number ): this;
 
 
       abstract get(): ProgramInfo;

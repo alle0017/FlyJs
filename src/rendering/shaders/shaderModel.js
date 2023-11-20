@@ -3,6 +3,8 @@ export var AttributesName;
     AttributesName["vertex"] = "vertex_position";
     AttributesName["color"] = "color";
     AttributesName["textureCoordinates"] = "texture_coords";
+    AttributesName["skIndices"] = "sk_indices";
+    AttributesName["skWeights"] = "weights";
 })(AttributesName || (AttributesName = {}));
 export var UniformsName;
 (function (UniformsName) {
@@ -10,12 +12,14 @@ export var UniformsName;
     UniformsName["transformation"] = "transformation";
     UniformsName["bumpScale"] = "bump_scale";
     UniformsName["framePosition"] = "frame_position";
+    //bones
 })(UniformsName || (UniformsName = {}));
 export var BindingsName;
 (function (BindingsName) {
     BindingsName["texture"] = "texture";
     BindingsName["textureSampler"] = "texture_sampler";
     BindingsName["displacementMap"] = "displacement_map";
+    BindingsName["bones"] = "bones";
 })(BindingsName || (BindingsName = {}));
 class Shader {
     constructor() {
@@ -29,6 +33,7 @@ class Shader {
         this.vertexReturnedValue = '';
         this._attributesData = new Map();
         this._uniformsData = new Map();
+        this._functions = '';
     }
 }
 Shader.FRAGMENT = 0;

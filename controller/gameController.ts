@@ -12,6 +12,7 @@ interface Renderer {
       append( name: string, func: RenderFunction ): Renderer;
       remove( name: string ): RenderFunction | undefined;
       setAttributes( name: string, attributes: DrawOpt ): Renderer;
+      setToAll( attributes: DrawOpt ): Renderer;
       draw(): void;
 }
 export class GameController {

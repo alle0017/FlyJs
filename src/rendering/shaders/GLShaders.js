@@ -4,17 +4,6 @@ class WebGLShader extends Model.Shader {
     constructor() {
         super(...arguments);
         this.fragmentUniforms = [];
-        this.skinningFunction = `
-      void skinning( inout vec4 pos, vec4 weights, vec4 indices ) {
-            if( any( weights ) ) {
-                  mat4 m = 0;
-                  for( int i = 0; i < 4; i++ ) {
-                        m += (bones[ indices[i] ]* weights[i]).xyz;
-                  }
-                  pos = mul( m, pos );
-            }
-      }
-      `;
     }
     static setTypes() {
         this.types[WebGLShader.MAT4x4] = 'mat4';
@@ -57,6 +46,7 @@ class WebGLShader extends Model.Shader {
         this.vertexReturnedValue = '';
         this._attributesData.clear();
         this._uniformsData.clear();
+        this._functions = '';
         return this;
     }
     addAttributesData(name, type) {
@@ -106,6 +96,8 @@ class WebGLShader extends Model.Shader {
             this.vCode.reduce((prev, next) => `${prev}\n\t\t\t\t\t${next}`) :
             '';
         return `
+            ${this._functions}
+            
             ${this.getAttributesDefinition()}
 
             ${this.getUniformsDefinition(WebGLShader.VERTEX)}
@@ -231,6 +223,37 @@ class WebGLShader extends Model.Shader {
                   float height = texture2D( ${BN.displacementMap}, ${AN.textureCoordinates} );
                   position.y += height * ${UN.bumpScale}; 
             `);
+        return this;
+    }
+    getSkinningFunction(bones) {
+        return /*glsl*/ `
+            const int MAX_BONES = ${bones};
+            mat4 skinning( vec4 weights, vec4 indices ) {
+            
+                  mat4 m = mat4(
+                        0, 0, 0, 0,
+                        0, 0, 0, 0,
+                        0, 0, 0, 0,
+                        0, 0, 0, 0
+                        );
+                  for( int i = 0; i < 4; i++ ) {
+                        m+= bones[ int(indices[i]) ]*weights[i];
+                  }
+                  m[3] = vec4( 0, 0, 0, 0 );
+                  return m;
+            }
+            `;
+    }
+    /*TODO: to not have strange effects, first, add perspective etc... ADD AS LAST */
+    useSkeletalAnimation(bones) {
+        const SKINNING_MAT = 'skinning_mat';
+        this._functions += this.getSkinningFunction(bones);
+        this
+            .addAttribute(AN.skIndices, WebGLShader.VEC4)
+            .addAttribute(AN.skWeights, WebGLShader.VEC4)
+            .vCode.push(
+        /* glsl */ ` mat4 skinning_mat = skinning( ${AN.skWeights}, ${AN.skIndices} );`);
+        this.positionTransformations.push(SKINNING_MAT);
         return this;
     }
     get() {

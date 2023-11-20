@@ -7,11 +7,13 @@ type DrawableElementOptions = {
       static: boolean;
       perspective: boolean;
       imageData: DrawableImageOptions;
-      primitive?: Primitives;
+      primitive: Primitives;
+      bonesData: SkeletalAnimationOptions;
 };
 type DrawableElementEssential = {
       vertices: number[];
 } 
+
 
 export enum BufferUsage {
       vertex,
@@ -49,6 +51,11 @@ export type Color = {
       g: number;
       b: number;
       a: number;
+}
+export type SkeletalAnimationOptions = {
+      bones: number;
+      weights: number[];
+      indices: number[];
 }
 export type DrawableImageOptions = {
       textureCoords: number[];
@@ -107,6 +114,7 @@ export type DrawOpt = {
        */
       animationVector?: [number, number];
       bumpScale?: number;
+      bones?: number[][];
 }
 
 export type DrawableElementAttributes =  DrawableElementEssential & Partial<DrawableElementOptions>;
@@ -160,7 +168,7 @@ export type GPUCodeProperties = {
       attributeStride: number;
       uniformStride: number;
       uniformsName: string[];
-      bindings?: { name: string, type: string }[];
+      bindings?: string[];
   }
   export type Renderable = {
       attributes: DrawOpt,

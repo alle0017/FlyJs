@@ -15,7 +15,7 @@ export class WebGPUShader extends Model.Shader {
 
       private uniformBindingLocation: number = -1;
 
-      private bindingsData: {type: string, name: string}[] = [];
+      private bindingsData: string[] = [];
 
       private readonly VARYING_STRUCT: string = 'Varyings';
       private readonly UNIFORMS_STRUCT: string = 'Uniforms';
@@ -31,22 +31,6 @@ export class WebGPUShader extends Model.Shader {
       private uniformOffset: number = 0;
 
       protected static typeSize: Model.TypeInfos[] = [];
-
-      private readonly skinningFunction: string = /* wgsl */`
-
-      fn skinning( indices: vec4i, weights: vec4f ) -> mat4x4f {
-            var m: mat4x4f = mat4x4f(
-                  vec4f(0, 0, 0, 0),
-                  vec4f(0, 0, 0, 0),
-                  vec4f(0, 0, 0, 0),
-                  vec4f(0, 0, 0, 0)
-            );
-            for( var i = 0; i < 4; i++ ){
-                  m += bones[indices[i]]*weights[i];
-           }
-           return m;
-      }
-      `;
 
 
       protected addAttributesInfo( name: string, type: number, bindingLocation: number ): void {  
@@ -77,10 +61,7 @@ export class WebGPUShader extends Model.Shader {
                   typeInfo.type = UNIFORM;
                   name = UNIFORM;
             }
-            this.bindingsData[ bindingLocation ] = {
-                  type: this.getType(type),
-                  name
-            };
+            this.bindingsData[ bindingLocation ] = name;
             return {
                   components: typeInfo.components,
                   size: typeInfo.size
@@ -145,6 +126,8 @@ export class WebGPUShader extends Model.Shader {
             this._uniformsData.clear();
             this.bindingsData = [];
 
+            this._functions = '';
+
             return this;
       }
       protected getType(type: number): string {
@@ -199,6 +182,7 @@ export class WebGPUShader extends Model.Shader {
             this.vCode.reduce((prev, next)=> `${prev}\n\t\t\t\t\t${next}`): 
             '';
             return `
+            ${this._functions}
             ${this.getUniformsDefinition()}
             ${this.getVaryingsDefinition()}
             ${this.getAttributesDefinition()}
@@ -236,8 +220,10 @@ export class WebGPUShader extends Model.Shader {
             return this;
       }
       protected addUniform(name: string, type: number): this {
-            if( this.uniformBindingLocation < 0 )
+            if( this.uniformBindingLocation < 0 ){
                   this.uniformBindingLocation = this.groupBindingLocation;
+                  this.groupBindingLocation++;
+            }
             const data = this.addUniformInfo( name, type, this.uniformBindingLocation );
             this.uniformOffset += data.components*data.size;
             this.uniforms.push(`${name}: ${this.getType(type)},`);
@@ -348,6 +334,39 @@ export class WebGPUShader extends Model.Shader {
                   out.position.y += ${this.UNIFORMS_VARIABLE}.${UN.bumpScale} * height;
             `);
             
+            return this;
+      }
+      private getSkinningFunction(): string {
+            return /* wgsl */`
+            fn skinning( indices: vec4f, weights: vec4f ) -> mat4x4f {
+                  var m: mat4x4f = mat4x4f(
+                        vec4f(0, 0, 0, 0),
+                        vec4f(0, 0, 0, 0),
+                        vec4f(0, 0, 0, 0),
+                        vec4f(0, 0, 0, 0)
+                  );
+                  for( var i = 0; i < 4; i++ ){
+                        m += bones[i32(indices[i])]*weights[i];
+                  }
+  		      m[3] = vec4f(0, 0, 0, 0);
+                  return m;
+            }
+            `;
+      }
+      useSkeletalAnimation( bones: number ): this {
+            const SKINNING_MAT = 'skinning_mat';
+            this._functions += this.getSkinningFunction();
+            this.bindingsData[ this.groupBindingLocation ] = BN.bones;
+            this.bindings.push(`@group(0) @binding(${this.groupBindingLocation}) var<uniform> ${BN.bones}: array<mat4x4f,${bones}>;`);
+            this.groupBindingLocation++;
+            this
+            .addAttribute( AN.skIndices, WebGPUShader.VEC4 )
+            .addAttribute( AN.skWeights, WebGPUShader.VEC4 )
+            .vCode.push(/* wgsl */`
+             var ${ SKINNING_MAT } = skinning( ${this.ATTRIBUTES_VARIABLE}.${AN.skIndices}, ${this.ATTRIBUTES_VARIABLE}.${AN.skWeights} );
+            `);
+
+            this.positionTransformations.push( SKINNING_MAT );
             return this;
       }
       override get(): Model.ProgramInfo {

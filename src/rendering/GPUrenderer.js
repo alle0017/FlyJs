@@ -42,12 +42,15 @@ export class Renderer extends WebGPU {
             };
         console.log('no buffer');
         const uniforms = (drawOpt, pass) => {
-            var _a;
-            if (JSON.stringify(opt.oldData) !== JSON.stringify(drawOpt)) {
-                opt.uniforms.data = (new Float32Array(this.getUniformsData(opt.uniformsName, drawOpt)));
-                opt.oldData = drawOpt;
+            var _a, _b, _c;
+            //if( JSON.stringify( opt.oldData ) !== JSON.stringify( drawOpt ) ){
+            const arrays = this.getUniformsData(opt.uniformsName, drawOpt, opt.uniforms);
+            opt.oldData = drawOpt;
+            (_a = this.device) === null || _a === void 0 ? void 0 : _a.queue.writeBuffer(opt.uniforms.buffer, 0, new Float32Array(arrays.uniformArray));
+            if ((_b = opt.uniforms) === null || _b === void 0 ? void 0 : _b.boneBuffer) {
+                (_c = this.device) === null || _c === void 0 ? void 0 : _c.queue.writeBuffer(opt.uniforms.boneBuffer, 0, new Float32Array(arrays.boneArray));
             }
-            (_a = this.device) === null || _a === void 0 ? void 0 : _a.queue.writeBuffer(opt.uniforms.buffer, 0, opt.uniforms.data);
+            //}
             pass.setBindGroup(0, opt.uniforms.bindGroup);
         };
         return (drawOpt, pass) => {
@@ -56,8 +59,10 @@ export class Renderer extends WebGPU {
             defaultRenderFunc(pass);
         };
     }
-    getUniformsData(uniformsName, opt) {
+    getUniformsData(uniformsName, opt, uniforms) {
+        var _a;
         const uniformArray = [];
+        const boneArray = [];
         const funcs = {
             [UN.perspective]: () => {
                 uniformArray.push(...this.view.perspectiveMatrix);
@@ -75,10 +80,22 @@ export class Renderer extends WebGPU {
         for (let name of uniformsName) {
             funcs[name]();
         }
-        return uniformArray;
+        if (opt.bones) {
+            opt.bones.forEach(el => {
+                boneArray.push(...el);
+            });
+        }
+        else if (uniforms.boneBuffer) {
+            for (let i = 0; i < ((_a = uniforms.boneBuffer) === null || _a === void 0 ? void 0 : _a.size) / 4; i++)
+                boneArray.push(0);
+        }
+        return {
+            uniformArray,
+            boneArray,
+        };
     }
     useImage(image) {
-        var _a, _b;
+        var _a;
         const texture = this.createTexture({
             usage: GPUTextureUsage.TEXTURE_BINDING |
                 GPUTextureUsage.COPY_DST |
@@ -88,27 +105,34 @@ export class Renderer extends WebGPU {
             format: 'rgba8unorm'
         });
         (_a = this.device) === null || _a === void 0 ? void 0 : _a.queue.copyExternalImageToTexture({ source: image, flipY: true }, { texture }, { width: image.width, height: image.height });
-        const sampler = (_b = this.device) === null || _b === void 0 ? void 0 : _b.createSampler();
-        return {
-            sampler: sampler,
-            texture: texture,
-        };
+        return texture;
     }
-    setUniforms(pipeline, stride, bindings, imageData) {
+    setUniforms(pipeline, stride, bindings, imageData, bones) {
         const buffers = [];
         let buffer;
+        let boneBuffer;
         const funcs = {
             [BN.displacementMap]: (resource) => {
                 if (imageData && imageData.displacementMap)
-                    resource.texture = this.useImage(imageData.displacementMap).texture.createView();
+                    resource.texture = this.useImage(imageData.displacementMap).createView();
             },
             [BN.texture]: (resource) => {
                 if (imageData)
-                    resource.texture = this.useImage(imageData.image).texture.createView();
+                    resource.texture = this.useImage(imageData.image).createView();
             },
             [BN.textureSampler]: (resource) => {
                 var _a;
                 resource.texture = (_a = this.device) === null || _a === void 0 ? void 0 : _a.createSampler();
+            },
+            [BN.bones]: (resource) => {
+                if (!bones)
+                    this.error(`uniform bind group (bones number not defined)`, Types.RendererErrorType.initialization);
+                boneBuffer = this.createBuffer({
+                    // 16 elements for each matrix
+                    arrayByteLength: Float32Array.BYTES_PER_ELEMENT * 16 * bones,
+                    usage: Types.BufferUsage.uniform
+                });
+                resource.buffer = boneBuffer;
             },
             [UNIFORM]: (resource) => {
                 buffer = this.createBuffer({
@@ -122,11 +146,11 @@ export class Renderer extends WebGPU {
             const resource = {
                 location: i,
             };
-            if (funcs[bindings[i].name]) {
-                funcs[bindings[i].name](resource);
+            if (funcs[bindings[i]]) {
+                funcs[bindings[i]](resource);
             }
             else {
-                this.error(`uniform bind group (name ${bindings[i].name} not recognized)`, Types.RendererErrorType.initialization);
+                this.error(`uniform bind group (name ${bindings[i]} not recognized)`, Types.RendererErrorType.initialization);
             }
             buffers.push(resource);
         }
@@ -136,11 +160,12 @@ export class Renderer extends WebGPU {
         });
         return {
             buffer,
+            boneBuffer,
             bindGroup,
-            data: new Float32Array([]),
         };
     }
     setProgramAttributes(opt) {
+        var _a;
         const data = ProgramSetterDelegate.getProperties(opt, Types.ProgramMode.webgpu);
         const pipeline = this.createPipeline({
             vShader: data.vertex,
@@ -167,7 +192,7 @@ export class Renderer extends WebGPU {
         });
         let uniforms;
         if (data.bindings && data.bindings.length > 0)
-            uniforms = this.setUniforms(pipeline, data.uniformStride, data.bindings, opt.imageData);
+            uniforms = this.setUniforms(pipeline, data.uniformStride, data.bindings, opt.imageData, ((_a = opt.bonesData) === null || _a === void 0 ? void 0 : _a.bones) || 0);
         return {
             pipeline,
             vertexBuffer,
@@ -193,6 +218,12 @@ export class Renderer extends WebGPU {
             return this;
         }
         this.objects.get(name).attributes = Object.assign(Object.assign({}, this.objects.get(name).attributes), attributes);
+        return this;
+    }
+    setToAll(attributes) {
+        for (let el of this.objects.keys()) {
+            this.setAttributes(el, attributes);
+        }
         return this;
     }
     remove(name) {

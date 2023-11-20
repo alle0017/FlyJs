@@ -13,7 +13,6 @@ export class ProgramSetterDelegate {
       private static elaborateData(
             data: Types.DrawableElementAttributes,
             attributes:  Map<string, number[]>, 
-            //uniforms:  Map<string, number[]>, 
             infos: Model.Shader
       ): void {
             if( data.staticColor ){
@@ -30,11 +29,19 @@ export class ProgramSetterDelegate {
             }
             if( data.perspective ){
                   infos.usePerspective();
-                  //uniforms.set( UN.perspective, [] );
             }
             if( !data.static ){
                   infos.useDynamicElement();
-                  //uniforms.set( UN.transformation, [] );
+            }
+            if( data.bonesData ){
+                  infos.useSkeletalAnimation( data.bonesData.bones );
+                  if( 
+                        data.bonesData.indices.length !== data.bonesData.weights.length ||
+                        data.bonesData.indices.length/4 !== data.bonesData.bones
+                  )
+                  throw 'length of bonesData indices and weights must be equal to number of bones*4, check inserted data';
+                  attributes.set( AN.skIndices, data.bonesData.indices );
+                  attributes.set( AN.skWeights, data.bonesData.weights );
             }
       }
       private static elaborateImageData( opt: Types.DrawableImageOptions, infos:  Model.Shader ): void {

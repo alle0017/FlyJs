@@ -6,22 +6,6 @@ export class WebGLShader extends Model.Shader {
       protected static typeSize: Model.TypeInfos[] = [];
       protected fragmentUniforms: string[] = [];
 
-      private readonly skinningFunction: string = /*glsl*/`
-      mat4 skinning( vec4 weights, vec4 indices ) {
-      
-            mat4 m = mat4(
-                  0, 0, 0, 0,
-                  0, 0, 0, 0,
-                  0, 0, 0, 0,
-                  0, 0, 0, 0
-                  );
-            for( int i = 0; i < 4; i++ ) {
-                  m+= bones[ int(indices[i]) ]*weights[i];
-            }
-            return m;
-      }
-      `;
-
       static setTypes(){
             this.types[WebGLShader.MAT4x4] = 'mat4';
             this.types[WebGLShader.MAT3x3] = 'mat3';
@@ -72,6 +56,8 @@ export class WebGLShader extends Model.Shader {
             this._attributesData.clear();
             this._uniformsData.clear();
 
+            this._functions = '';
+
             return this;
       }
       private addAttributesData( name: string, type: number ){
@@ -120,6 +106,8 @@ export class WebGLShader extends Model.Shader {
             this.vCode.reduce((prev, next)=> `${prev}\n\t\t\t\t\t${next}`): 
             '';
             return `
+            ${this._functions}
+            
             ${this.getAttributesDefinition()}
 
             ${this.getUniformsDefinition(WebGLShader.VERTEX)}
@@ -265,6 +253,38 @@ export class WebGLShader extends Model.Shader {
                   position.y += height * ${UN.bumpScale}; 
             `)
 
+            return this;
+      }
+      private getSkinningFunction( bones: number ): string {
+            return/*glsl*/`
+            const int MAX_BONES = ${ bones };
+            mat4 skinning( vec4 weights, vec4 indices ) {
+            
+                  mat4 m = mat4(
+                        0, 0, 0, 0,
+                        0, 0, 0, 0,
+                        0, 0, 0, 0,
+                        0, 0, 0, 0
+                        );
+                  for( int i = 0; i < 4; i++ ) {
+                        m+= bones[ int(indices[i]) ]*weights[i];
+                  }
+                  m[3] = vec4( 0, 0, 0, 0 );
+                  return m;
+            }
+            `;
+      }
+      /*TODO: to not have strange effects, first, add perspective etc... ADD AS LAST */
+      useSkeletalAnimation( bones: number ): this {
+            const SKINNING_MAT = 'skinning_mat';
+            this._functions += this.getSkinningFunction( bones );
+            this
+            .addAttribute( AN.skIndices, WebGLShader.VEC4 )
+            .addAttribute( AN.skWeights, WebGLShader.VEC4 )
+            .vCode.push(
+                  /* glsl */` mat4 skinning_mat = skinning( ${AN.skWeights}, ${AN.skIndices} );`
+            )
+            this.positionTransformations.push( SKINNING_MAT );
             return this;
       }
       get(): Model.ProgramInfo {

@@ -174,8 +174,11 @@ export class Renderer extends WebGL {
             if (!loc)
                 this.error('uniform location', RendererErrorType.acquisition);
             locations.set(key, loc);
-            if (key in BN && imageData) { // enums generates also values as key
+            if (key in BN && imageData && key !== BN.bones) { // enums generates also values as key
                 textures.set(key, this.createTexture(key, imageData));
+            }
+            else if (key === BN.bones) {
+                //TODO: put bones code here
             }
         }
         return textures;
@@ -240,6 +243,12 @@ export class Renderer extends WebGL {
             return this;
         }
         this.objects.get(name).attributes = Object.assign(Object.assign({}, this.objects.get(name).attributes), opt);
+        return this;
+    }
+    setToAll(attributes) {
+        for (let el of this.objects.keys()) {
+            this.setAttributes(el, attributes);
+        }
         return this;
     }
     draw() {

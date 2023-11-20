@@ -8,7 +8,7 @@ import { UNIFORM } from "./shaders/GPUShader.js";
 type UniformInformation = { 
       buffer: GPUBuffer | undefined, 
       bindGroup: GPUBindGroup, 
-      data: Float32Array, 
+      boneBuffer: GPUBuffer | undefined,
 } 
 type WebGPURenderFunctionData = {
       pipeline: GPURenderPipeline,
@@ -21,8 +21,8 @@ type WebGPURenderFunctionData = {
       uniformsName: string[],
 }
 type UniformsSetterFunction = {
-      [ T in UN ]: ()=>void; 
-}
+      [ T in UN ]: ()=>void;
+};
 
 
 export class Renderer extends WebGPU { 
@@ -68,11 +68,15 @@ export class Renderer extends WebGPU {
                   }
             console.log('no buffer')
             const uniforms = ( drawOpt: Types.DrawOpt, pass: GPURenderPassEncoder )=>{
-                  if( JSON.stringify( opt.oldData ) !== JSON.stringify( drawOpt ) ){
-                        opt.uniforms!.data = ( new Float32Array( this.getUniformsData( opt.uniformsName, drawOpt ) ) );
+                  //if( JSON.stringify( opt.oldData ) !== JSON.stringify( drawOpt ) ){
+                        const arrays = this.getUniformsData( opt.uniformsName, drawOpt, opt.uniforms! );
                         opt.oldData = drawOpt;
-                  }
-                  this.device?.queue.writeBuffer( opt.uniforms!.buffer!, 0,  opt.uniforms!.data );
+                        this.device?.queue.writeBuffer( opt.uniforms!.buffer!, 0,  new Float32Array( arrays.uniformArray ) );
+                        if( opt.uniforms?.boneBuffer ){
+                              this.device?.queue.writeBuffer( opt.uniforms!.boneBuffer!, 0,  new Float32Array( arrays.boneArray ) );
+                              
+                        }
+                  //}
                   pass.setBindGroup( 0, opt.uniforms!.bindGroup );
             }
             return ( drawOpt: Types.DrawOpt, pass: GPURenderPassEncoder )=>{
@@ -81,8 +85,9 @@ export class Renderer extends WebGPU {
                   defaultRenderFunc( pass );
             }
       }
-      private getUniformsData( uniformsName: string[], opt: Types.DrawOpt ): number[] {
+      private getUniformsData( uniformsName: string[], opt: Types.DrawOpt, uniforms: UniformInformation ) {
             const uniformArray: number[] = []
+            const boneArray: number[] = []
             const funcs: UniformsSetterFunction = {
                   [UN.perspective]: ()=>{
                         uniformArray.push( ...this.view.perspectiveMatrix );
@@ -100,9 +105,21 @@ export class Renderer extends WebGPU {
             for( let name of uniformsName ){
                   funcs[name as UN]();
             }
-            return uniformArray;
+            if( opt.bones ){
+                 opt.bones.forEach( el=>{
+                        boneArray.push( ...el );
+                 } );
+                 
+            }else if( uniforms.boneBuffer ){
+                  for( let i = 0; i < uniforms.boneBuffer?.size/4; i++ )
+                        boneArray.push(0);
+            }
+            return {
+                  uniformArray,
+                  boneArray,
+            };
       }
-      private useImage( image: ImageBitmap ){
+      private useImage( image: ImageBitmap ): GPUTexture {
             const texture = this.createTexture({
                   usage: 
                         GPUTextureUsage.TEXTURE_BINDING |
@@ -118,26 +135,33 @@ export class Renderer extends WebGPU {
                   { texture },
                   { width: image.width, height: image.height },
             );
-            const sampler = this.device?.createSampler()
-            return {
-                  sampler: sampler,
-                  texture: texture,
-            }
+            return texture;
       }
-      private setUniforms( pipeline: GPURenderPipeline, stride: number, bindings: {type: string, name: string}[], imageData?: Types.DrawableImageOptions ){
+      private setUniforms( pipeline: GPURenderPipeline, stride: number, bindings: string[], imageData?: Types.DrawableImageOptions, bones?: number ): UniformInformation {
             const buffers: Resources[] = [];
             let buffer: GPUBuffer | undefined;
+            let boneBuffer: GPUBuffer | undefined;
             const funcs: { [k in BN]: (arg: any)=>void;} & { [UNIFORM]: (arg: any)=>void } = {
                   [BN.displacementMap]: (resource: Resources)=>{
                         if( imageData && imageData.displacementMap )
-                        resource.texture = this.useImage( imageData.displacementMap! ).texture.createView();
+                        resource.texture = this.useImage( imageData.displacementMap! ).createView();
                   },
                   [BN.texture]: (resource: Resources)=>{
                         if( imageData )
-                        resource.texture = this.useImage( imageData.image ).texture.createView();
+                        resource.texture = this.useImage( imageData.image ).createView();
                   },
                   [BN.textureSampler]: (resource: Resources)=>{
                         resource.texture = this.device?.createSampler();
+                  },
+                  [BN.bones]: ( resource: Resources )=>{
+                        if( !bones )
+                              this.error( `uniform bind group (bones number not defined)`, Types.RendererErrorType.initialization )
+                        boneBuffer = this.createBuffer({
+                              // 16 elements for each matrix
+                              arrayByteLength: Float32Array.BYTES_PER_ELEMENT * 16 * bones!,
+                              usage: Types.BufferUsage.uniform
+                        });
+                        resource.buffer = boneBuffer;
                   },
                   [UNIFORM]: (resource: Resources)=>{
                         buffer = this.createBuffer({
@@ -151,10 +175,10 @@ export class Renderer extends WebGPU {
                   const resource: Resources = {
                         location: i,
                   }
-                  if( funcs[ bindings[i].name as BN ] ){
-                        funcs[ bindings[i].name as BN ]( resource );
+                  if( funcs[ bindings[i] as BN ] ){
+                        funcs[ bindings[i] as BN ]( resource );
                   }else{
-                        this.error( `uniform bind group (name ${bindings[i].name} not recognized)`, Types.RendererErrorType.initialization )
+                        this.error( `uniform bind group (name ${bindings[i]} not recognized)`, Types.RendererErrorType.initialization )
                   }
                   buffers.push( resource )
             }
@@ -164,8 +188,8 @@ export class Renderer extends WebGPU {
             })
             return {
                   buffer,
+                  boneBuffer,
                   bindGroup,
-                  data: new Float32Array([]),
             }
       }
       private setProgramAttributes( opt: Types.DrawableElementAttributes ){
@@ -199,7 +223,12 @@ export class Renderer extends WebGPU {
             });
             let uniforms: UniformInformation | undefined;
             if( data.bindings && data.bindings.length > 0 )
-                  uniforms = this.setUniforms( pipeline, data.uniformStride, data.bindings!, opt.imageData );
+                  uniforms = this.setUniforms( 
+                        pipeline, 
+                        data.uniformStride, 
+                        data.bindings!, 
+                        opt.imageData, 
+                        opt.bonesData?.bones || 0 );
             return {
                   pipeline,
                   vertexBuffer,
@@ -207,6 +236,7 @@ export class Renderer extends WebGPU {
                   indexBuffer,
                   uniforms,
                   uniformsName: data.uniformsName,
+                  
             }
       }
       create( opt: Types.DrawableElementAttributes ): Types.RenderFunction {
@@ -231,6 +261,12 @@ export class Renderer extends WebGPU {
             this.objects.get( name )!.attributes  = {
                   ...this.objects.get( name )!.attributes,
                   ...attributes
+            }
+            return this;
+      }
+      setToAll( attributes: Types.DrawOpt ): this {
+            for( let el of this.objects.keys() ){
+                  this.setAttributes( el, attributes );
             }
             return this;
       }

@@ -31,6 +31,7 @@ this engine is intended to be more like a library, very lightweight, without the
 ##### TYPES
 -[DrawOpt](#drawopt)\
 -[DrawableImageOptions](#drawableelementoptions)\
+-[SkeletalAnimationOptions](#skeletalanimationoptions)\
 -[Point3D](#point3d)\
 -[Point2D](#point2d)
 ### NEXT STEPS
@@ -365,12 +366,14 @@ type DrawOpt = {
        */
       animationVector?: [number, number];
       bumpScale?: number;
+      bones?: number[][];
 }
 ```
 
 ### DrawableElementOptions
 ``` typescript
 type DrawableElementOptions = {
+      required vertices: number[];
       // color vector 
       color: number[];
       // index buffer 
@@ -385,6 +388,14 @@ type DrawableElementOptions = {
       * @see DrawableImageOptions
       */
       imageData: DrawableImageOptions;
+      /*
+      * how to draw the actual shapes (lines, triangles, points, etc)
+      */
+      primitive: Primitives;
+      /**
+      * @see SkeletalAnimationOptions
+      */
+      bonesData: SkeletalAnimationOptions;
 };
 ```
 ### DrawableImageOptions
@@ -398,6 +409,14 @@ type DrawableImageOptions = {
       animate?: boolean;
       // image used for displacement mapping
       displacementMap?: ImageBitmap;
+}
+```
+### SkeletalAnimationOptions
+```typescript
+type SkeletalAnimationOptions = {
+      bones: number;
+      weights: number[];
+      indices: number[];
 }
 ```
 ### Point3D
@@ -503,9 +522,20 @@ type Point2D = {
 </tr>
 <tr>
       <td>
+            :heavy_check_mark:  
       </td>
       <td>
-            implement skeletal animations
+            implement skeletal animations on webgpu
+      </td>
+      <td>
+            done
+      </td>
+</tr>
+<tr>
+      <td>
+      </td>
+      <td>
+            implement skeletal animations on webgl
       </td>
       <td>
             on-going

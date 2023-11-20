@@ -4,9 +4,7 @@ import { WebGLShader as GL } from './shaders/GLShaders.js';
 import { AttributesName as AN } from './shaders/shaderModel.js';
 export class ProgramSetterDelegate {
     constructor() { }
-    static elaborateData(data, attributes, 
-    //uniforms:  Map<string, number[]>, 
-    infos) {
+    static elaborateData(data, attributes, infos) {
         if (data.staticColor) {
             const c = data.staticColor;
             infos.useUniformColor(c.r, c.g, c.b, c.a);
@@ -21,11 +19,17 @@ export class ProgramSetterDelegate {
         }
         if (data.perspective) {
             infos.usePerspective();
-            //uniforms.set( UN.perspective, [] );
         }
         if (!data.static) {
             infos.useDynamicElement();
-            //uniforms.set( UN.transformation, [] );
+        }
+        if (data.bonesData) {
+            infos.useSkeletalAnimation(data.bonesData.bones);
+            if (data.bonesData.indices.length !== data.bonesData.weights.length ||
+                data.bonesData.indices.length / 4 !== data.bonesData.bones)
+                throw 'length of bonesData indices and weights must be equal to number of bones*4, check inserted data';
+            attributes.set(AN.skIndices, data.bonesData.indices);
+            attributes.set(AN.skWeights, data.bonesData.weights);
         }
     }
     static elaborateImageData(opt, infos) {
