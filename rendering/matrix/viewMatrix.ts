@@ -1,8 +1,19 @@
-import { DrawOpt, Axis, } from "../types.js";
+import { DrawOpt, Axis, Point3D } from "../types.js";
 import { Matrix } from './matrices.js'
-import { UniformsName as UN } from '../shaders/shaderModel.js';
 
-
+type Bone = {
+      // initial position of the bone
+      inversePose: number[],
+      // matrix that represents the local transformation
+      // in global reference
+      transformationMatrix: number[],
+}
+type Skeleton = {
+      bones: Bone[],
+      indices: number[],
+      // root node of the skeleton
+      root: number
+}
 export class ViewDelegate {
 
       private _near: number = 0.1;         
@@ -93,6 +104,11 @@ export class ViewDelegate {
             if (opt.transformationMatrix) return opt.transformationMatrix;
       
             // Select and compose translation, rotation, and scale matrices
+
+            const scale = this.selectScaleMatrix(opt);
+            if (scale)
+            transformationMatrix = Matrix.composeMatrix(transformationMatrix, 4, scale);
+
             const translation = this.selectTranslationMatrix(opt);
             if (translation)
             transformationMatrix = Matrix.composeMatrix(transformationMatrix, 4, translation);
@@ -101,14 +117,31 @@ export class ViewDelegate {
             if (rotation)
             transformationMatrix = Matrix.composeMatrix(transformationMatrix, 4, rotation);
       
-            const scale = this.selectScaleMatrix(opt);
-            if (scale)
-            transformationMatrix = Matrix.composeMatrix(transformationMatrix, 4, scale);
-      
             // If a camera is provided, combine with the transformation matrix
             if (opt.camera)
             transformationMatrix = Matrix.composeMatrix(opt.camera.matrix, 4, transformationMatrix);
       
             return transformationMatrix;
       }  
+      calculateSkeletonPosition( bones: Skeleton, angles: number[], translations: Point3D[] ){
+            const outMatrices: number[][] = [];
+            bones.bones.forEach( (bone, i) =>{
+                  const localMatrix = Matrix.composeMatrix(
+                        Matrix.rotation( angles[i], Axis.Z ),
+                        4,
+                        Matrix.translate( translations[i] )
+                  );
+                  if( i === bones.root )
+                        bone.transformationMatrix = localMatrix;
+                  else  
+                        bone.transformationMatrix = Matrix.composeMatrix(
+                              bones.bones[ bones.indices[i] ].transformationMatrix,
+                              4,
+                              localMatrix
+                        );
+                  outMatrices.push( 
+                        bone.transformationMatrix)
+            })
+            return outMatrices;
+      }
 }

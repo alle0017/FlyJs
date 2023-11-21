@@ -291,13 +291,13 @@ export class Renderer extends WebGL {
                   objOpt: opt,
             });
       }
-      append( name: string, func: RenderFunction ): this {
+      /*append( name: string, func: RenderFunction ): this {
             this.objects.set( name, {
                   function: func,
                   attributes: {}
             });
             return this;
-      }
+      }*/
       remove( name: string ): RenderFunction | undefined {
             if( !this.objects.has( name ) ){
                   console.warn(`object ${name} does not exist`);

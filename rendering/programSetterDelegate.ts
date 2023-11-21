@@ -35,11 +35,6 @@ export class ProgramSetterDelegate {
             }
             if( data.bonesData ){
                   infos.useSkeletalAnimation( data.bonesData.bones );
-                  if( 
-                        data.bonesData.indices.length !== data.bonesData.weights.length ||
-                        data.bonesData.indices.length/4 !== data.bonesData.bones
-                  )
-                  throw 'length of bonesData indices and weights must be equal to number of bones*4, check inserted data';
                   attributes.set( AN.skIndices, data.bonesData.indices );
                   attributes.set( AN.skWeights, data.bonesData.weights );
             }

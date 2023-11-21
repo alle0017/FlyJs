@@ -1,4 +1,4 @@
-import { Axis, } from "../types.js";
+import { Axis } from "../types.js";
 import { Matrix } from './matrices.js';
 export class ViewDelegate {
     set zNear(zNear) {
@@ -77,18 +77,30 @@ export class ViewDelegate {
         if (opt.transformationMatrix)
             return opt.transformationMatrix;
         // Select and compose translation, rotation, and scale matrices
+        const scale = this.selectScaleMatrix(opt);
+        if (scale)
+            transformationMatrix = Matrix.composeMatrix(transformationMatrix, 4, scale);
         const translation = this.selectTranslationMatrix(opt);
         if (translation)
             transformationMatrix = Matrix.composeMatrix(transformationMatrix, 4, translation);
         const rotation = this.selectRotationMatrix(opt);
         if (rotation)
             transformationMatrix = Matrix.composeMatrix(transformationMatrix, 4, rotation);
-        const scale = this.selectScaleMatrix(opt);
-        if (scale)
-            transformationMatrix = Matrix.composeMatrix(transformationMatrix, 4, scale);
         // If a camera is provided, combine with the transformation matrix
         if (opt.camera)
             transformationMatrix = Matrix.composeMatrix(opt.camera.matrix, 4, transformationMatrix);
         return transformationMatrix;
+    }
+    calculateSkeletonPosition(bones, angles, translations) {
+        const outMatrices = [];
+        bones.bones.forEach((bone, i) => {
+            const localMatrix = Matrix.composeMatrix(Matrix.rotation(angles[i], Axis.Z), 4, Matrix.translate(translations[i]));
+            if (i === bones.root)
+                bone.transformationMatrix = localMatrix;
+            else
+                bone.transformationMatrix = Matrix.composeMatrix(bones.bones[bones.indices[i]].transformationMatrix, 4, localMatrix);
+            outMatrices.push(bone.transformationMatrix);
+        });
+        return outMatrices;
     }
 }

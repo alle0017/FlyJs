@@ -220,13 +220,13 @@ export class Renderer extends WebGL {
     create(opt) {
         return this.createRenderFunction(Object.assign(Object.assign({}, this.setProgramAttributes(opt)), { objOpt: opt }));
     }
-    append(name, func) {
-        this.objects.set(name, {
-            function: func,
-            attributes: {}
-        });
-        return this;
-    }
+    /*append( name: string, func: RenderFunction ): this {
+          this.objects.set( name, {
+                function: func,
+                attributes: {}
+          });
+          return this;
+    }*/
     remove(name) {
         var _a;
         if (!this.objects.has(name)) {

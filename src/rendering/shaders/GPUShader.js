@@ -297,7 +297,6 @@ class WebGPUShader extends Model.Shader {
                   for( var i = 0; i < 4; i++ ){
                         m += bones[i32(indices[i])]*weights[i];
                   }
-  		      m[3] = vec4f(0, 0, 0, 0);
                   return m;
             }
             `;

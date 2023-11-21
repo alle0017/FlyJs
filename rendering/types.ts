@@ -56,6 +56,7 @@ export type SkeletalAnimationOptions = {
       bones: number;
       weights: number[];
       indices: number[];
+      root: number;
 }
 export type DrawableImageOptions = {
       textureCoords: number[];
@@ -114,7 +115,10 @@ export type DrawOpt = {
        */
       animationVector?: [number, number];
       bumpScale?: number;
-      bones?: number[][];
+      bones?: {
+            angle?: number[];
+            translate?: Point3D[];
+      }
 }
 
 export type DrawableElementAttributes =  DrawableElementEssential & Partial<DrawableElementOptions>;
@@ -169,8 +173,28 @@ export type GPUCodeProperties = {
       uniformStride: number;
       uniformsName: string[];
       bindings?: string[];
-  }
-  export type Renderable = {
+}
+export type Renderable = {
+      function: (arg0: any, arg1: any) => void,
+      arrays: RenderableArrays,
+      skeleton: Skeleton,
+      uniformsName: string[],
       attributes: DrawOpt,
-      function: RenderFunction,
+}
+export type RenderableArrays = {
+      bones: number[],
+      transformations: number[],
+}
+export type Bone = {
+      // initial position of the bone
+      inversePose: number[],
+      // matrix that represents the local transformation
+      // in global reference
+      transformationMatrix: number[],
+}
+export type Skeleton = {
+      bones: Bone[],
+      indices: number[],
+      // root node of the skeleton
+      root: number
 }
