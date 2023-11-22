@@ -28,10 +28,12 @@ this engine is intended to be more like a library, very lightweight, without the
 -[drawXZGrid](#drawxzgrid)\
 -[drawYZGrid](#drawyzgrid)\
 -[removeGrids](#removegrids)
+-[globalCamera]()
 ##### TYPES
 -[DrawOpt](#drawopt)\
 -[DrawableImageOptions](#drawableelementoptions)\
 -[SkeletalAnimationOptions](#skeletalanimationoptions)\
+-[BonesOpt](#bonesopt)\
 -[Point3D](#point3d)\
 -[Point2D](#point2d)
 ### NEXT STEPS
@@ -314,6 +316,14 @@ removeGrids(): void
 \
 remove all the grids currently on the screen
 
+### globalCamera
+```typescript
+globalCamera(): void
+```
+\
+add commands to move a debug camera
+
+
 ## TYPES
 ### DrawOpt 
 ``` typescript
@@ -372,31 +382,54 @@ type DrawOpt = {
 
 ### DrawableElementOptions
 ``` typescript
-type DrawableElementOptions = {
-      required vertices: number[];
-      // color vector 
-      color: number[];
-      // index buffer 
-      indices: number[];
-      // if you want a single-colored static object
-      staticColor: Color;
-      // if you want an object that cannot move or change (default to false)
-      static: boolean;
-      // wether or note to use perspective (default to false)
-      perspective: boolean;
+type DrawOpt = Partial<{
+      angle: number;
       /**
-      * @see DrawableImageOptions
-      */
-      imageData: DrawableImageOptions;
-      /*
-      * how to draw the actual shapes (lines, triangles, points, etc)
-      */
-      primitive: Primitives;
+       * 'x' 'y' or 'z'
+       * @use Axis in generics.ts as enum to represent the different axis
+       */
+      axis: Axis;
       /**
-      * @see SkeletalAnimationOptions
+       * whether or not to convert angle to radiants
+       */
+      toRad: boolean;
+      /**
+       * the rotation matrix 3d, so a 4x4 matrix ( you can use Matrix.rotate to get once)
+       * @see Matrix in matrix.ts
+       */
+      rotationMatrix: number[];
+      /**
+       * the translation matrix 3d, so a 4x4 matrix ( you can use Matrix.translate to get once)
+       * @see Matrix in matrix.ts
+       */
+      translationMatrix: number[];
+      /**
+       * 3d vector that translate (moves) the element in the space
+       */
+      translation: Point3D;
+      /**
+       * projection matrix 
+       * @TODO add someway of projection matrix generation in Matrix
+       */
+      projectionMatrix: number[];
+      /**
+      * the scale to use for reduce/enlarge objects
       */
-      bonesData: SkeletalAnimationOptions;
-};
+      scale: number | Point3D;
+      /**
+      * the scale matrix 3d, so a 4x4 matrix ( you can use Matrix.scale to get once)
+      * @see Matrix in matrix.ts
+      */
+      scaleMatrix: number[];
+      camera: Camera;
+      transformationMatrix: number[];
+      /**
+       * vectors that indicate where the actual frame and costume of image atlas (sprite sheet) you want to draw
+       */
+      animationVector: [number, number];
+      bumpScale: number;
+      bones: Partial<BonesOpt>
+}>;
 ```
 ### DrawableImageOptions
 ```typescript
@@ -417,6 +450,14 @@ type SkeletalAnimationOptions = {
       bones: number;
       weights: number[];
       indices: number[];
+      root: number;
+}
+```
+### BonesOpt
+```typescript
+type BonesOpt = {
+      angle: number[];
+      translate: Point3D[];
 }
 ```
 ### Point3D
@@ -454,6 +495,16 @@ type Point2D = {
       <th>
             status
       </th>
+</tr>
+<tr>
+      <td>
+      </td>
+      <td>
+            global game object
+      </td>
+      <td>
+            on-going
+      </td>
 </tr>
 <tr>
       <td>
@@ -533,22 +584,24 @@ type Point2D = {
 </tr>
 <tr>
       <td>
+            :heavy_check_mark: 
       </td>
       <td>
             implement skeletal animations on webgl
       </td>
       <td>
-            on-going
+            done
       </td>
 </tr>
 <tr>
       <td>
+            :heavy_check_mark: 
       </td>
       <td>
             implement a fallback system with possibility of require specific api for the renderer
       </td>
       <td>
-            on-going
+            done
       </td>
 </tr>
 </table>
@@ -567,7 +620,8 @@ this section contains all the material used to study rendering (by me), and that
 [-WebGPU Fundamentals](https://webgpufundamentals.org/)
 
 ### VARIOUS RENDERING TECHNIQUES
-
+[-WebGL skeletal animation](https://webglfundamentals.org/webgl/lessons/webgl-skinning.html)\
+[-Skeletal Animation: from math to code](https://www.youtube.com/watch?v=ZzMnu3v_MOw)\
 [-Skeletal Animation](https://veeenu.github.io/blog/implementing-skeletal-animation/)\
 [-WebGPU API for C++](https://eliemichel.github.io/LearnWebGPU/introduction.html)\
 [-WebGPU for Metal developers](https://metalbyexample.com/webgpu-part-two/)\
