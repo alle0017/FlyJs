@@ -27,7 +27,7 @@ this engine is intended to be more like a library, very lightweight, without the
 -[drawXYGrid](#drawxygrid)\
 -[drawXZGrid](#drawxzgrid)\
 -[drawYZGrid](#drawyzgrid)\
--[removeGrids](#removegrids)
+-[removeGrids](#removegrids)\
 -[globalCamera](#globalcamera)
 ##### TYPES
 -[DrawOpt](#drawopt)\
