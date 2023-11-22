@@ -327,61 +327,6 @@ add commands to move a debug camera
 ## TYPES
 ### DrawOpt 
 ``` typescript
-type DrawOpt = {
-      //angle of rotation
-      angle?: number;
-      /**
-       * 'x' 'y' or 'z'. which axis is used to rotate the object around.
-       */
-      axis?: Axis;
-      /**
-       * whether or not to convert angle to radiants
-       */
-      toRad?: boolean;
-      /**
-       * the rotation matrix 3d, so a 4x4 matrix ( you can use Matrix.rotate to get once)
-       * @see Matrix in matrix.ts
-       */
-      rotationMatrix?: number[];
-      /**
-       * the translation matrix 3d, so a 4x4 matrix ( you can use Matrix.translate to get once)
-       * @see Matrix in matrix.ts
-       */
-      translationMatrix?: number[];
-      /**
-       * 3d vector that translate (moves) the element in the space
-       */
-      translation?: Point3D;
-      /**
-       * projection matrix 
-       */
-      projectionMatrix?: number[];
-      /**
-      * the scale to use for reduce/enlarge objects
-      */
-      scale?: number | Point3D;
-      /**
-      * the scale matrix 3d, so a 4x4 matrix ( you can use Matrix.scale to get once)
-      * @see Matrix in matrix.ts
-      */
-      scaleMatrix?: number[];
-      /**
-      * camera matrix 
-      *@see Camera in camera.ts
-      */
-      camera?: Camera;
-      transformationMatrix?: number[];
-      /**
-       * vectors that indicate where the actual frame and costume of image atlas (sprite sheet) you want to draw
-       */
-      animationVector?: [number, number];
-      bumpScale?: number;
-      bones?: number[][];
-}
-```
-
-### DrawableElementOptions
-``` typescript
 type DrawOpt = Partial<{
       angle: number;
       /**
@@ -430,6 +375,20 @@ type DrawOpt = Partial<{
       bumpScale: number;
       bones: Partial<BonesOpt>
 }>;
+```
+
+### DrawableElementOptions
+``` typescript
+type DrawableElementOptions = {
+      color: number[];
+      indices: number[];
+      staticColor: Color;
+      static: boolean;
+      perspective: boolean;
+      imageData: DrawableImageOptions;
+      primitive: Primitives;
+      bonesData: SkeletalAnimationOptions;
+}
 ```
 ### DrawableImageOptions
 ```typescript
