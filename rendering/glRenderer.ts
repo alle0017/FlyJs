@@ -1,4 +1,4 @@
-import { WebGL } from './codeDelegates/GLcode.js';
+/*import { WebGL } from './codeDelegates/GLcode.js';
 import { 
       DrawableElementAttributes, 
       RenderFunction, 
@@ -297,7 +297,7 @@ export class Renderer extends WebGL {
                   attributes: {}
             });
             return this;
-      }*/
+      }
       remove( name: string ): RenderFunction | undefined {
             if( !this.objects.has( name ) ){
                   console.warn(`object ${name} does not exist`);
@@ -329,4 +329,4 @@ export class Renderer extends WebGL {
                   (el.function as ( arg0: DrawOpt )=>void)( el.attributes );
             }
       }
-}
+}*/

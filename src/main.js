@@ -152,10 +152,10 @@ const image = game.renderer.create({
 const image = game.renderer.create({
     vertices,
     indices,
-    staticColor: { r: 1, g: 0, b: 0, a: 1 },
+    staticColor: { r: 0, g: 1, b: 0.3, a: 1 },
     perspective: true,
     bonesData: {
-        bones: 4,
+        bones: 5,
         weights: weights,
         indices: boneIndex,
         root: 0
@@ -163,25 +163,19 @@ const image = game.renderer.create({
     primitive: Primitives.lines,
 });
 let i = 0;
+let j = 0;
+let val = 1;
+//game.debug.globalCamera();
 game.renderer.append('img', image).setAttributes('img', {
     translation: { x: 0, y: 0, z: -2 },
+    scale: 0.1,
+    bones: {
+        angle: [
+            0, 60, 0, 0, 60
+        ]
+    }
 });
 const f = () => {
-    game.renderer.append('img', image).setAttributes('img', {
-        scale: 0.05,
-        bones: {
-            angle: [
-                0, (-1) ** i * 30, (-1) ** i * 30, (-1) ** i * 30
-            ],
-            translate: [
-                { x: 0, y: 0, z: 0 },
-                { x: 0, y: 4, z: 0 },
-                { x: 0, y: 4, z: 0 },
-                { x: 0, y: 4, z: 0 },
-            ]
-        }
-    });
-    i++;
     game.renderer.draw();
     requestAnimationFrame(f);
 };

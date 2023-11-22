@@ -152,7 +152,7 @@ export type ProgramOpt = {
       stride: number,
 }
 
-export type RenderFunction = (( arg0: DrawOpt, arg1: GPURenderPassEncoder )=>void) | (( arg0: DrawOpt )=>void);
+export type RenderFunction = (arg0: any) => void;
 
 export type TypedArray = Float32Array | Uint16Array;
 
@@ -174,13 +174,35 @@ export type GPUCodeProperties = {
       uniformsName: string[];
       bindings?: string[];
 }
-export type Renderable = {
-      function: (arg0: any, arg1: any) => void,
-      arrays: RenderableArrays,
+export type AttribsInfo = {
+      buffer: WebGLBuffer,
+      location: number,
+      components: number,
+}
+export type UniformsInfo = {
+      //buffer: WebGLBuffer,
+      location: WebGLUniformLocation,
+      components: number,
+      type: string
+      value: number | number[]
+}
+export type WebGPURenderable = {
+      function: (arg0: any) => void,
       skeleton: Skeleton,
       uniformsName: string[],
       attributes: DrawOpt,
+      buffers: {
+            bones: GPUBuffer | undefined,
+            transformations: GPUBuffer | undefined
+      }
 }
+export type WebGLRenderable = {
+      function: (arg0: any) => void,
+      skeleton: Skeleton,
+      uniforms: Map<string, UniformsInfo>,
+      attributes: DrawOpt,
+}
+export type Renderable = WebGPURenderable | WebGLRenderable;
 export type RenderableArrays = {
       bones: number[],
       transformations: number[],

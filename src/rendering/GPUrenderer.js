@@ -29,29 +29,14 @@ export class WebGPURenderer extends WebGPU {
             pass.setVertexBuffer(0, opt.vertexBuffer);
             pass.drawIndexed(opt.N_OF_VERTICES);
         };
-        if (!opt.uniforms)
-            return (arrays, pass) => {
+        if (!opt.uniformsBindGroup)
+            return (pass) => {
                 pass.setPipeline(opt.pipeline);
                 defaultRenderFunc(pass);
             };
-        if (!opt.uniforms.buffer)
-            return (arrays, pass) => {
-                pass.setBindGroup(0, opt.uniforms.bindGroup);
-                pass.setPipeline(opt.pipeline);
-                defaultRenderFunc(pass);
-            };
-        const uniforms = (arrays, pass) => {
-            var _a, _b, _c;
-            (_a = this.device) === null || _a === void 0 ? void 0 : _a.queue.writeBuffer(opt.uniforms.buffer, 0, new Float32Array(arrays.transformations));
-            if ((_b = opt.uniforms) === null || _b === void 0 ? void 0 : _b.boneBuffer) {
-                console.log(arrays.bones);
-                (_c = this.device) === null || _c === void 0 ? void 0 : _c.queue.writeBuffer(opt.uniforms.boneBuffer, 0, new Float32Array(arrays.bones));
-            }
-            pass.setBindGroup(0, opt.uniforms.bindGroup);
-        };
-        return (arrays, pass) => {
+        return (pass) => {
             pass.setPipeline(opt.pipeline);
-            uniforms(arrays, pass);
+            pass.setBindGroup(0, opt.uniformsBindGroup);
             defaultRenderFunc(pass);
         };
     }
@@ -188,9 +173,26 @@ export class WebGPURenderer extends WebGPU {
             }
         };
     }
+    setSkeleton(bones, opt) {
+        const bonesArray = [];
+        if (!opt.bones || (!opt.bones.angle && !opt.bones.translate))
+            return [];
+        if (!opt.bones.translate) {
+            opt.bones.translate = [];
+            for (let i = 0; i < opt.bones.angle.length; i++)
+                opt.bones.translate.push({ x: 0, y: 0, z: 0 });
+        }
+        else if (!opt.bones.angle) {
+            opt.bones.angle = [];
+            for (let i = 0; i < opt.bones.translate.length; i++)
+                opt.bones.angle.push(0);
+        }
+        const bonesMatrices = this.view.calculateSkeletonPosition(bones, opt.bones.angle, opt.bones.translate);
+        bonesArray.push(...bonesMatrices.reduce((prev, curr) => prev ? prev.concat(curr) : curr));
+        return bonesArray;
+    }
     getArrays(bones, uniformsName, opt) {
         const uniformArray = [];
-        const bonesArray = [];
         const funcs = {
             [UN.perspective]: () => {
                 uniformArray.push(...this.view.perspectiveMatrix);
@@ -208,33 +210,34 @@ export class WebGPURenderer extends WebGPU {
         for (let name of uniformsName) {
             funcs[name]();
         }
-        if (opt.bones && (opt.bones.angle || opt.bones.translate)) {
-            if (!opt.bones.translate) {
-                opt.bones.translate = [];
-                for (let i = 0; i < opt.bones.angle.length; i++)
-                    opt.bones.translate.push({ x: 0, y: 0, z: 0 });
-            }
-            else if (!opt.bones.angle) {
-                opt.bones.angle = [];
-                for (let i = 0; i < opt.bones.translate.length; i++)
-                    opt.bones.angle.push(0);
-            }
-            const bonesMatrices = this.view.calculateSkeletonPosition(bones, opt.bones.angle, opt.bones.translate);
-            bonesArray.push(...bonesMatrices.reduce((prev, curr) => prev ? prev.concat(curr) : curr));
-        }
         return {
             uniformArray,
-            bonesArray
+            bonesArray: this.setSkeleton(bones, opt)
         };
     }
     create(opt) {
+        var _a, _b, _c, _d;
         const arrays = this.initArrays(opt);
         const attribs = this.setProgramAttributes(opt);
+        if (attribs.renderFunctionAttribs.uniforms && attribs.renderFunctionAttribs.uniforms.buffer) {
+            (_a = this.device) === null || _a === void 0 ? void 0 : _a.queue.writeBuffer(attribs.renderFunctionAttribs.uniforms.buffer, 0, new Float32Array(arrays.transformations));
+        }
+        if (attribs.renderFunctionAttribs.uniforms && attribs.renderFunctionAttribs.uniforms.boneBuffer) {
+            (_b = this.device) === null || _b === void 0 ? void 0 : _b.queue.writeBuffer(attribs.renderFunctionAttribs.uniforms.boneBuffer, 0, new Float32Array(arrays.bones));
+        }
         return {
-            function: this.createRenderFunction(Object.assign({}, attribs.renderFunctionAttribs)),
-            arrays: {
-                bones: arrays.bones,
-                transformations: arrays.transformations
+            function: this.createRenderFunction({
+                pipeline: attribs.renderFunctionAttribs.pipeline,
+                vertexBuffer: attribs.renderFunctionAttribs.vertexBuffer,
+                N_OF_VERTICES: attribs.renderFunctionAttribs.N_OF_VERTICES,
+                indexBuffer: attribs.renderFunctionAttribs.indexBuffer,
+                uniformsBindGroup: attribs.renderFunctionAttribs.uniforms ?
+                    attribs.renderFunctionAttribs.uniforms.bindGroup :
+                    undefined
+            }),
+            buffers: {
+                bones: (_c = attribs.renderFunctionAttribs.uniforms) === null || _c === void 0 ? void 0 : _c.boneBuffer,
+                transformations: (_d = attribs.renderFunctionAttribs.uniforms) === null || _d === void 0 ? void 0 : _d.buffer
             },
             skeleton: arrays.skeleton,
             uniformsName: attribs.uniformsName,
@@ -243,22 +246,24 @@ export class WebGPURenderer extends WebGPU {
     }
     append(name, obj) {
         this.objects.set(name, obj);
+        this.setAttributes(name, {});
         return this;
     }
     setAttributes(name, attributes) {
-        if (!this.objects.has(name)) {
+        var _a, _b;
+        const obj = this.objects.get(name);
+        if (!obj) {
             console.warn(`object ${name} does not exist`);
             return this;
         }
-        const obj = this.objects.get(name);
         obj.attributes = Object.assign(Object.assign({}, obj.attributes), attributes);
         const arrays = this.getArrays(obj.skeleton, obj.uniformsName, obj.attributes);
-        const transformations = arrays.uniformArray.length > 0 ? arrays.uniformArray : obj.arrays.transformations;
-        const bones = arrays.bonesArray.length > 0 ? arrays.bonesArray : obj.arrays.bones;
-        obj.arrays = {
-            bones,
-            transformations
-        };
+        if (arrays.uniformArray && obj.buffers.transformations) {
+            (_a = this.device) === null || _a === void 0 ? void 0 : _a.queue.writeBuffer(obj.buffers.transformations, 0, new Float32Array(arrays.uniformArray));
+        }
+        if (arrays.bonesArray && obj.buffers.bones) {
+            (_b = this.device) === null || _b === void 0 ? void 0 : _b.queue.writeBuffer(obj.buffers.bones, 0, new Float32Array(arrays.bonesArray));
+        }
         return this;
     }
     setToAll(attributes) {
@@ -286,7 +291,7 @@ export class WebGPURenderer extends WebGPU {
             return;
         const pass = encoder.beginRenderPass(this.renderPassDescriptor);
         for (let el of this.objects.values())
-            el.function(el.arrays, pass);
+            el.function(pass);
         pass.end();
         (_b = this.device) === null || _b === void 0 ? void 0 : _b.queue.submit([encoder.finish()]);
     }

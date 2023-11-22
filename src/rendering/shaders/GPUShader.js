@@ -285,6 +285,7 @@ class WebGPUShader extends Model.Shader {
             `);
         return this;
     }
+    //TODO check if 4 is correct
     getSkinningFunction() {
         return /* wgsl */ `
             fn skinning( indices: vec4f, weights: vec4f ) -> mat4x4f {

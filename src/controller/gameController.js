@@ -1,4 +1,4 @@
-import { WebGPURenderer } from '../rendering/GPURenderer.js';
+import { WebGLRenderer } from '../rendering/GLRenderer2.js';
 import { Debug } from './debug.js';
 export class GameController {
     constructor() {
@@ -8,9 +8,10 @@ export class GameController {
         this.cvs.width = 800;
         this.cvs.height = 600;
         document.body.appendChild(this.cvs);
-        this.renderer = new WebGPURenderer(this.cvs);
-        /*else
-              this.renderer = new WebGLRenderer( this.cvs );*/
+        /*this.renderer = new WebGPURenderer( this.cvs );
+        else
+              */
+        this.renderer = new WebGLRenderer(this.cvs);
         this.debug = new Debug(this);
     }
     static async get() {

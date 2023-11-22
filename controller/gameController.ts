@@ -1,4 +1,4 @@
-import { Renderer as WebGLRenderer } from '../rendering/GLRenderer.js'
+import { WebGLRenderer } from '../rendering/GLRenderer2.js'
 import { WebGPURenderer } from '../rendering/GPURenderer.js';
 import { DrawableElementAttributes, RenderFunction, DrawOpt, Color, Renderable } from '../rendering/types.js';
 import { Debug } from './debug.js';
@@ -9,8 +9,8 @@ interface Renderer {
       culling: boolean;
       init(): Promise<Renderer>;
       create( opt: DrawableElementAttributes ): any;
-      append( name: string, func: any ): Renderer;
-      remove( name: string ): any;
+      append( name: string, obj: Renderable ): Renderer;
+      remove( name: string ): Renderable | undefined;
       setAttributes( name: string, attributes: DrawOpt ): Renderer;
       setToAll( attributes: DrawOpt ): Renderer;
       draw(): void;
@@ -27,9 +27,10 @@ export class GameController {
             this.cvs.width = 800;
             this.cvs.height = 600;
             document.body.appendChild( this.cvs );
-            this.renderer = new WebGPURenderer( this.cvs );
-            /*else
-                  this.renderer = new WebGLRenderer( this.cvs );*/
+            /*this.renderer = new WebGPURenderer( this.cvs );
+            else
+                  */
+            this.renderer = new WebGLRenderer( this.cvs );
             this.debug = new Debug( this );
       }
       static async get(): Promise<GameController> {

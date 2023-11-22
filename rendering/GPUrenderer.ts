@@ -13,13 +13,13 @@ import {
       RendererErrorType,
       DrawOpt,
       DrawableImageOptions,
-      Renderable,
+      WebGPURenderable,
       RenderableArrays,
       Skeleton,
-      Bone
+      Bone,
+      SkeletalAnimationOptions
  } from './types.js';
 import { Matrix } from "./matrix/matrices.js";
-import { UniformsName } from './shaders/shaderModel';
 
 type UniformInformation = { 
       buffer: GPUBuffer | undefined, 
@@ -31,14 +31,14 @@ type WebGPURenderFunctionData = {
       vertexBuffer: GPUBuffer,
       N_OF_VERTICES: number,
       indexBuffer: GPUBuffer,
-      uniforms?: UniformInformation,
+      uniformsBindGroup: GPUBindGroup | undefined,
 }
 type UniformsSetterFunction = {
       [ T in UN ]: ()=>void;
 };
 
 export class WebGPURenderer extends WebGPU {
-      protected objects: Map<string,Renderable> = new Map<string,Renderable>();
+      protected objects: Map<string,WebGPURenderable> = new Map<string,WebGPURenderable>();
       protected renderPassDescriptor?: GPURenderPassDescriptor;
       private view: ViewDelegate;
 
@@ -65,28 +65,14 @@ export class WebGPURenderer extends WebGPU {
                   pass.setVertexBuffer( 0, opt.vertexBuffer );
                   pass.drawIndexed( opt.N_OF_VERTICES )
             }
-            if( !opt.uniforms )
-                  return ( arrays: RenderableArrays , pass: GPURenderPassEncoder )=>{
+            if( !opt.uniformsBindGroup )
+                  return ( pass: GPURenderPassEncoder )=>{
                         pass.setPipeline( opt.pipeline );
                         defaultRenderFunc( pass );
                   }
-            if( !opt.uniforms.buffer )
-                  return ( arrays: RenderableArrays, pass: GPURenderPassEncoder )=>{
-                        pass.setBindGroup( 0, opt.uniforms!.bindGroup );
-                        pass.setPipeline( opt.pipeline );
-                        defaultRenderFunc( pass );
-                  }
-            const uniforms = ( arrays: RenderableArrays, pass: GPURenderPassEncoder )=>{
-                        this.device?.queue.writeBuffer( opt.uniforms!.buffer!, 0,  new Float32Array( arrays.transformations ) );
-                        if( opt.uniforms?.boneBuffer ){
-                              console.log( arrays.bones )
-                              this.device?.queue.writeBuffer( opt.uniforms!.boneBuffer!, 0,  new Float32Array( arrays.bones ) );
-                        }
-                  pass.setBindGroup( 0, opt.uniforms!.bindGroup );
-            }
-            return ( arrays: RenderableArrays, pass: GPURenderPassEncoder )=>{
+            return ( pass: GPURenderPassEncoder )=>{
                   pass.setPipeline( opt.pipeline );
-                  uniforms( arrays, pass );
+                  pass.setBindGroup( 0, opt.uniformsBindGroup! );
                   defaultRenderFunc( pass );
             }
       }
@@ -234,9 +220,24 @@ export class WebGPURenderer extends WebGPU {
                   }
             }
       }
+      private setSkeleton( bones: Skeleton, opt: DrawOpt ): number[] {
+            const bonesArray: number[] = [];
+            if( !opt.bones || ( !opt.bones.angle && !opt.bones.translate ) ) return [];
+            if( !opt.bones.translate ){
+                  opt.bones.translate = []
+                  for( let i = 0; i < opt.bones.angle!.length; i++ )
+                        opt.bones.translate.push({ x: 0, y: 0, z: 0})
+            }else if( !opt.bones.angle ){
+                  opt.bones.angle = []
+                  for( let i = 0; i < opt.bones.translate.length; i++ )
+                        opt.bones.angle.push(0);
+            }
+            const bonesMatrices = this.view.calculateSkeletonPosition( bones, opt.bones.angle!, opt.bones.translate );
+            bonesArray.push( ...bonesMatrices.reduce( (prev, curr)=> prev? prev.concat( curr ): curr ) );
+            return bonesArray;
+      }
       private getArrays( bones: Skeleton, uniformsName: string[], opt: DrawOpt ) {
             const uniformArray: number[] = [];
-            const bonesArray: number[] = [];
             const funcs: UniformsSetterFunction = {
                   [UN.perspective]: ()=>{
                         uniformArray.push( ...this.view.perspectiveMatrix );
@@ -254,62 +255,70 @@ export class WebGPURenderer extends WebGPU {
             for( let name of uniformsName ){
                   funcs[name as UN]();
             }
-            if( opt.bones && ( opt.bones.angle || opt.bones.translate ) ){
-                  if( !opt.bones.translate ){
-                        opt.bones.translate = []
-                        for( let i = 0; i < opt.bones.angle!.length; i++ )
-                              opt.bones.translate.push({ x: 0, y: 0, z: 0})
-                  }else if( !opt.bones.angle ){
-                        opt.bones.angle = []
-                        for( let i = 0; i < opt.bones.translate.length; i++ )
-                              opt.bones.angle.push(0);
-                  }
-                  const bonesMatrices = this.view.calculateSkeletonPosition( bones, opt.bones.angle!, opt.bones.translate );
-                  bonesArray.push( ...bonesMatrices.reduce( (prev, curr)=> prev? prev.concat( curr ): curr ) );
-            }
             return {
                   uniformArray,
-                  bonesArray
+                  bonesArray: this.setSkeleton( bones, opt )
             };
       }
-      create( opt: DrawableElementAttributes ): Renderable {
+      create( opt: DrawableElementAttributes ): WebGPURenderable {
             const arrays = this.initArrays( opt );
             const attribs = this.setProgramAttributes( opt );
+            if( attribs.renderFunctionAttribs.uniforms && attribs.renderFunctionAttribs.uniforms.buffer ){
+                  this.device?.queue.writeBuffer( 
+                        attribs.renderFunctionAttribs.uniforms.buffer, 
+                        0,  
+                        new Float32Array( arrays.transformations ) );
+            }
+            if( attribs.renderFunctionAttribs.uniforms && attribs.renderFunctionAttribs.uniforms.boneBuffer ){
+                  this.device?.queue.writeBuffer( 
+                        attribs.renderFunctionAttribs.uniforms.boneBuffer, 
+                        0,  
+                        new Float32Array( arrays.bones ) );
+            }
             return {
                   function: this.createRenderFunction({
-                        ...attribs.renderFunctionAttribs
+                        pipeline: attribs.renderFunctionAttribs.pipeline,
+                        vertexBuffer: attribs.renderFunctionAttribs.vertexBuffer,
+                        N_OF_VERTICES: attribs.renderFunctionAttribs.N_OF_VERTICES,
+                        indexBuffer: attribs.renderFunctionAttribs.indexBuffer,
+                        uniformsBindGroup: attribs.renderFunctionAttribs.uniforms? 
+                                    attribs.renderFunctionAttribs.uniforms.bindGroup:
+                                    undefined
                   }),
-                  arrays: {
-                        bones: arrays.bones,
-                        transformations: arrays.transformations
-                        
+                  buffers: {
+                        bones: attribs.renderFunctionAttribs.uniforms?.boneBuffer,
+                        transformations: attribs.renderFunctionAttribs.uniforms?.buffer
                   },
                   skeleton: arrays.skeleton,
                   uniformsName: attribs.uniformsName,
                   attributes: {}
             }
       }
-      append( name: string, obj: Renderable ): this {
+      append( name: string, obj: WebGPURenderable ): this {
             this.objects.set( name, obj );
+            this.setAttributes( name, {} );
             return this;
       }
       setAttributes( name: string, attributes: DrawOpt ): this {
-            if( !this.objects.has( name ) ){
+            const obj = this.objects.get( name );
+            if( !obj ){
                   console.warn(`object ${name} does not exist`);
                   return this;
             }
-            const obj = this.objects.get( name );
-            obj!.attributes = {
-                  ...obj!.attributes,
+            obj.attributes = {
+                  ...obj.attributes,
                   ...attributes
             }
-            const arrays = this.getArrays( obj!.skeleton, obj!.uniformsName, obj!.attributes );
-            const transformations = arrays.uniformArray.length > 0 ? arrays.uniformArray: obj!.arrays.transformations;
-            const bones = arrays.bonesArray.length > 0? arrays.bonesArray: obj!.arrays.bones;
-            obj!.arrays! = {
-                  bones,
-                  transformations
+            const arrays = this.getArrays( obj.skeleton, obj.uniformsName, obj!.attributes );
+
+            if( arrays.uniformArray && obj.buffers.transformations ){
+                  this.device?.queue.writeBuffer( obj.buffers.transformations!, 0,  new Float32Array( arrays.uniformArray ) );
             }
+
+            if( arrays.bonesArray && obj.buffers.bones ){
+                  this.device?.queue.writeBuffer( obj.buffers.bones, 0,  new Float32Array( arrays.bonesArray ) );
+            }
+
             return this;
       }
       setToAll( attributes: DrawOpt ): this {
@@ -318,7 +327,7 @@ export class WebGPURenderer extends WebGPU {
             }
             return this;
       }
-      remove( name: string ): Renderable | undefined {
+      remove( name: string ): WebGPURenderable | undefined {
             if( !this.objects.has( name ) ){
                   console.warn(`object ${name} does not exist`);
                   return;
@@ -335,7 +344,7 @@ export class WebGPURenderer extends WebGPU {
                   return;
             const pass = encoder.beginRenderPass( this.renderPassDescriptor );
             for( let el of this.objects.values() )
-                  el.function( el.arrays, pass )
+                  el.function( pass )
             pass.end()
             this.device?.queue.submit( [encoder.finish()] );
       }

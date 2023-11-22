@@ -96,14 +96,13 @@ class WebGLShader extends Model.Shader {
             this.vCode.reduce((prev, next) => `${prev}\n\t\t\t\t\t${next}`) :
             '';
         return `
-            ${this._functions}
             
             ${this.getAttributesDefinition()}
 
             ${this.getUniformsDefinition(WebGLShader.VERTEX)}
 
             ${this.getVaryingsDefinition()}
-
+            ${this._functions}
             void main() {
                   ${code}
                   gl_Position = ${this.getPositionTransformations()} ${this.vertexReturnedValue};
@@ -140,12 +139,20 @@ class WebGLShader extends Model.Shader {
         this.attributes.push(`attribute ${this.getType(type)} ${name};`);
         return this;
     }
-    addUniform(name, type, shaderType) {
+    addUniform(name, type, shaderType, arrayLength = 0) {
         if (shaderType === WebGLShader.FRAGMENT) {
-            this.fragmentUniforms.push(`uniform ${this.getType(type)} ${name};`);
+            if (arrayLength) {
+                this.fragmentUniforms.push(`uniform ${this.getType(type)} ${name}[${arrayLength}];`);
+            }
+            else
+                this.fragmentUniforms.push(`uniform ${this.getType(type)} ${name};`);
         }
         else {
-            this.uniforms.push(`uniform ${this.getType(type)} ${name};`);
+            if (arrayLength) {
+                this.uniforms.push(`uniform ${this.getType(type)} ${name}[${arrayLength}];`);
+            }
+            else
+                this.uniforms.push(`uniform ${this.getType(type)} ${name};`);
         }
         this.addUniformsData(name, type);
         return this;
@@ -225,11 +232,9 @@ class WebGLShader extends Model.Shader {
             `);
         return this;
     }
-    getSkinningFunction(bones) {
+    getSkinningFunction() {
         return /*glsl*/ `
-            const int MAX_BONES = ${bones};
             mat4 skinning( vec4 weights, vec4 indices ) {
-            
                   mat4 m = mat4(
                         0, 0, 0, 0,
                         0, 0, 0, 0,
@@ -239,16 +244,15 @@ class WebGLShader extends Model.Shader {
                   for( int i = 0; i < 4; i++ ) {
                         m+= bones[ int(indices[i]) ]*weights[i];
                   }
-                  m[3] = vec4( 0, 0, 0, 0 );
                   return m;
             }
             `;
     }
-    /*TODO: to not have strange effects, first, add perspective etc... ADD AS LAST */
     useSkeletalAnimation(bones) {
         const SKINNING_MAT = 'skinning_mat';
-        this._functions += this.getSkinningFunction(bones);
+        this._functions += this.getSkinningFunction();
         this
+            .addUniform(`${BN.bones}`, WebGLShader.MAT4x4, WebGLShader.VERTEX, bones)
             .addAttribute(AN.skIndices, WebGLShader.VEC4)
             .addAttribute(AN.skWeights, WebGLShader.VEC4)
             .vCode.push(
