@@ -69,57 +69,59 @@ export type Point2D = {
       y: number;
 }
 export type Point3D = Point2D & { z: number };
-export type DrawOpt = {
-      angle?: number;
+type BonesOpt = {
+      angle: number[];
+      translate: Point3D[];
+}
+export type DrawOpt = Partial<{
+      angle: number;
       /**
        * 'x' 'y' or 'z'
        * @use Axis in generics.ts as enum to represent the different axis
        */
-      axis?: Axis;
+      axis: Axis;
       /**
        * whether or not to convert angle to radiants
        */
-      toRad?: boolean;
+      toRad: boolean;
       /**
        * the rotation matrix 3d, so a 4x4 matrix ( you can use Matrix.rotate to get once)
        * @see Matrix in matrix.ts
        */
-      rotationMatrix?: number[];
+      rotationMatrix: number[];
       /**
        * the translation matrix 3d, so a 4x4 matrix ( you can use Matrix.translate to get once)
        * @see Matrix in matrix.ts
        */
-      translationMatrix?: number[];
+      translationMatrix: number[];
       /**
        * 3d vector that translate (moves) the element in the space
        */
-      translation?: Point3D;
+      translation: Point3D;
       /**
        * projection matrix 
        * @TODO add someway of projection matrix generation in Matrix
        */
-      projectionMatrix?: number[];
+      projectionMatrix: number[];
       /**
       * the scale to use for reduce/enlarge objects
       */
-      scale?: number | Point3D;
+      scale: number | Point3D;
       /**
       * the scale matrix 3d, so a 4x4 matrix ( you can use Matrix.scale to get once)
       * @see Matrix in matrix.ts
       */
-      scaleMatrix?: number[];
-      camera?: Camera;
-      transformationMatrix?: number[];
+      scaleMatrix: number[];
+      camera: Camera;
+      transformationMatrix: number[];
       /**
        * vectors that indicate where the actual frame and costume of image atlas (sprite sheet) you want to draw
        */
-      animationVector?: [number, number];
-      bumpScale?: number;
-      bones?: {
-            angle?: number[];
-            translate?: Point3D[];
-      }
-}
+      animationVector: [number, number];
+      bumpScale: number;
+      bones: Partial<BonesOpt>
+}>;
+
 
 export type DrawableElementAttributes =  DrawableElementEssential & Partial<DrawableElementOptions>;
 

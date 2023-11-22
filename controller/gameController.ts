@@ -1,4 +1,4 @@
-import { WebGLRenderer } from '../rendering/GLRenderer2.js'
+import { WebGLRenderer } from '../rendering/GLRenderer.js'
 import { WebGPURenderer } from '../rendering/GPURenderer.js';
 import { DrawableElementAttributes, RenderFunction, DrawOpt, Color, Renderable } from '../rendering/types.js';
 import { Debug } from './debug.js';
@@ -27,10 +27,10 @@ export class GameController {
             this.cvs.width = 800;
             this.cvs.height = 600;
             document.body.appendChild( this.cvs );
-            /*this.renderer = new WebGPURenderer( this.cvs );
+            if( 'gpu' in navigator )
+                  this.renderer = new WebGPURenderer( this.cvs );
             else
-                  */
-            this.renderer = new WebGLRenderer( this.cvs );
+                  this.renderer = new WebGLRenderer( this.cvs );
             this.debug = new Debug( this );
       }
       static async get(): Promise<GameController> {
