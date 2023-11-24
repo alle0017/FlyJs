@@ -29,25 +29,25 @@ export class Debug {
         const zAngleSlider = createSlider('vertical angle', 0, 360, 0);
         xSlider.input.oninput = () => {
             camera.x = parseFloat(xSlider.input.value);
-            this.game.renderer.setToAll({ camera: camera });
+            this.game.$renderer.setToAll({ camera: camera });
         };
         ySlider.input.oninput = () => {
             camera.y = parseFloat(ySlider.input.value);
-            this.game.renderer.setToAll({ camera: camera });
+            this.game.$renderer.setToAll({ camera: camera });
         };
         zSlider.input.oninput = () => {
             camera.z = parseFloat(zSlider.input.value);
-            this.game.renderer.setToAll({ camera: camera });
+            this.game.$renderer.setToAll({ camera: camera });
         };
         xyAngleSlider.input.oninput = () => {
             camera.rotationAxis = Axis.Y;
             camera.angle = parseFloat(xyAngleSlider.input.value);
-            this.game.renderer.setToAll({ camera: camera });
+            this.game.$renderer.setToAll({ camera: camera });
         };
         zAngleSlider.input.oninput = () => {
             camera.rotationAxis = Axis.X;
             camera.angle = parseFloat(zAngleSlider.input.value);
-            this.game.renderer.setToAll({ camera: camera });
+            this.game.$renderer.setToAll({ camera: camera });
         };
         div.append(xSlider.div);
         div.append(ySlider.div);
@@ -63,9 +63,9 @@ export class Debug {
         return div;
     }
     removeGrids() {
-        this.game.renderer.remove(this.DEBUG_GRID_XY);
-        this.game.renderer.remove(this.DEBUG_GRID_YZ);
-        this.game.renderer.remove(this.DEBUG_GRID_XZ);
+        this.game.$renderer.remove(this.DEBUG_GRID_XY);
+        this.game.$renderer.remove(this.DEBUG_GRID_YZ);
+        this.game.$renderer.remove(this.DEBUG_GRID_XZ);
     }
     drawXYGrid(color = { r: 1, g: 0, b: 0, a: 1 }) {
         const gridVertices = [];
@@ -75,14 +75,14 @@ export class Debug {
         for (let i = 0; i < 300; i++) {
             gridVertices.push(i * this.CELL_DIM - 1, -1, 0, i * this.CELL_DIM - 1, this.END_OF_SCREEN, 0);
         }
-        const grid = this.game.renderer.create({
+        const grid = this.game.$renderer.create({
             vertices: gridVertices,
             staticColor: color,
             primitive: Primitives.lines,
             perspective: true,
         });
-        this.game.renderer.append(this.DEBUG_GRID_XY, grid);
-        this.game.renderer.setAttributes(this.DEBUG_GRID_XY, {
+        this.game.$renderer.append(this.DEBUG_GRID_XY, grid);
+        this.game.$renderer.setAttributes(this.DEBUG_GRID_XY, {
             translation: { x: -15, y: -15, z: -1 },
         });
     }
@@ -94,14 +94,14 @@ export class Debug {
         for (let i = 0; i < 300; i++) {
             gridVertices.push(i * this.CELL_DIM - 1, -1, 0, i * this.CELL_DIM - 1, -1, i * this.END_OF_SCREEN);
         }
-        const grid = this.game.renderer.create({
+        const grid = this.game.$renderer.create({
             vertices: gridVertices,
             staticColor: color,
             primitive: Primitives.lines,
             perspective: true
         });
-        this.game.renderer.append(this.DEBUG_GRID_XZ, grid);
-        this.game.renderer.setAttributes(this.DEBUG_GRID_XZ, {
+        this.game.$renderer.append(this.DEBUG_GRID_XZ, grid);
+        this.game.$renderer.setAttributes(this.DEBUG_GRID_XZ, {
             translation: { x: 0, y: 1, z: -15 },
         });
     }
@@ -113,19 +113,19 @@ export class Debug {
         for (let i = 0; i < 300; i++) {
             gridVertices.push(0, i * this.CELL_DIM - 1, -1, 0, i * this.CELL_DIM - 1, this.END_OF_SCREEN);
         }
-        const grid = this.game.renderer.create({
+        const grid = this.game.$renderer.create({
             vertices: gridVertices,
             staticColor: color,
             primitive: Primitives.lines,
         });
-        this.game.renderer.append(this.DEBUG_GRID_YZ, grid);
-        this.game.renderer.setAttributes(this.DEBUG_GRID_YZ, {
+        this.game.$renderer.append(this.DEBUG_GRID_YZ, grid);
+        this.game.$renderer.setAttributes(this.DEBUG_GRID_YZ, {
             translation: { x: 1, y: 0, z: -1 },
         });
     }
     globalCamera() {
         const camera = new Camera();
         this.cameraControllerComponent(camera);
-        this.game.renderer.setToAll({ camera: camera });
+        this.game.$renderer.setToAll({ camera: camera });
     }
 }

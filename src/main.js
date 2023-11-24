@@ -111,7 +111,7 @@ const indices = [
 ];
 /*
 const img = await Load.image( 'pipeline.jpg' );
-const image = game.renderer.create({
+const image =  game.$renderer.create({
       indices: [
             0,1,2,
             0,2,3,
@@ -149,7 +149,7 @@ const image = game.renderer.create({
       perspective: true
 })
 */
-const image = game.renderer.create({
+const image = game.$renderer.create({
     vertices,
     indices,
     staticColor: { r: 0, g: 1, b: 0.3, a: 1 },
@@ -166,7 +166,7 @@ let i = 0;
 let j = 0;
 let val = 1;
 //game.debug.globalCamera();
-game.renderer.append('img', image).setAttributes('img', {
+game.$renderer.append('img', image).setAttributes('img', {
     translation: { x: 0, y: 0, z: -2 },
     scale: 0.1,
     bones: {
@@ -176,7 +176,7 @@ game.renderer.append('img', image).setAttributes('img', {
     }
 });
 const f = () => {
-    game.renderer.draw();
+    game.$renderer.draw();
     requestAnimationFrame(f);
 };
 f();

@@ -147,7 +147,7 @@ import { GameController } from './controller/gameController.js';
 
 const game = await GameController.get();
 const img = await Load.image( 'pipeline.jpg' );
-const image = game.renderer.create({
+const image =  game.$renderer.create({
       indices: [
             0,1,2,
             0,2,3,
@@ -170,12 +170,12 @@ const image = game.renderer.create({
       },,
       perspective: true
 })
-game.renderer.append( 'img', image ).setAttributes('img', { 
+ game.$renderer.append( 'img', image ).setAttributes('img', { 
       translation: {x: 0, y: 0, z: -5}, 
       scale: 0.5
 })
 const f = ()=>{
-      game.renderer.draw();
+       game.$renderer.draw();
       requestAnimationFrame(f)
 }
 f();
