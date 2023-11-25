@@ -437,6 +437,9 @@ export class WebGLRenderer extends WebGL {
             this.objects.delete( name );
             return obj;
       }
+      removeAll(): void {
+            this.objects.clear();
+      }
       setAttributes( name: string, opt: DrawOpt ): this {
             const obj = this.objects.get( name );
             if( !obj ){

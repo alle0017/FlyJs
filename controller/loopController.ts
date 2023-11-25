@@ -1,35 +1,40 @@
 export type LoopedFunction = (...args: any[]) => void;
-export type FunctionInfo = {
-      function: LoopedFunction,
-      id: number
-}
 export class LoopController {
-      private id = 0;
-      private functions: FunctionInfo[] = [];
+      private loopId = 0;
+      private functions: LoopedFunction[] = [];
+      private _delta = 0;
+      get delta(): number { return this._delta; }
+      set delta(value: number) {}
       constructor(){}
-      add( fn: LoopedFunction ): number {
-            this.functions.push( {
-                  function: fn,
-                  id: this.id
+      private executeFunctions(): void {
+            this.functions.forEach( fn =>{
+                  fn();
             });
-            return this.id++;
       }
-      remove( fnId: number ): LoopedFunction | undefined {
-            let index = -1;
+      add( fn: LoopedFunction ): void {
+            this.functions.push( fn );
+      }
+      remove( fn: LoopedFunction ): void {
             this.functions.every((val, i)=>{
-                  if ( val.id === fnId ){
-                        index = i;
+                  if ( fn.toString() == val.toString() ){
+                        this.functions.splice( i, 1 );
                         return false;
                   }
                   return true;
             })
-            if( index >= 0 )
-                  this.functions.splice( index, 1 );
-            return;
       }
-      execute(): void {
-            this.functions.forEach( (node)=>{
-                  node.function();
-            });
+      removeAll(){
+            this.functions = [];
+      }
+      execute(){
+            const fn: FrameRequestCallback = (delta: number)=>{
+                  this._delta = delta;
+                  this.executeFunctions();
+                  this.loopId = requestAnimationFrame(fn);
+            }
+            this.loopId = requestAnimationFrame(fn);
+      }
+      stop(){
+            cancelAnimationFrame(this.loopId);
       }
 }

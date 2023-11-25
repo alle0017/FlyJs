@@ -1,7 +1,5 @@
-import { Load } from './controller/loadData.js';
-import { Matrix } from './rendering/matrix/matrices.js';
 import { GameController } from './controller/gameController.js';
-import { Axis, Point3D, Primitives } from './rendering/types.js';
+import { Primitives } from './rendering/types.js';
 
 
 const game = await GameController.get();
@@ -37,44 +35,6 @@ const color =  [
       1.0, 1.0, 1.0, 1.0, 
       1.0, 0.4, 1.0, 1.0, 
       0.0, 0.3, 1.0, 1.0, 
-]
-const texture = [
-      // Front face
-
-      1, 1,
-      0, 1,
-      0, 0,
-      1, 0,
-
-      1, 1,
-      0, 1,
-      0, 0,
-      1, 0,
-
-      1, 1,
-      0, 1,
-      0, 0,
-      1, 0,
-
-      1, 1,
-      0, 1,
-      0, 0,
-      1, 0,
-
-      1, 1,
-      0, 1,
-      0, 0,
-      1, 0,
-
-      1, 1,
-      0, 1,
-      0, 0,
-      1, 0,
-      
-      1, 1,
-      0, 1,
-      0, 0,
-      1, 0,
 ]
 const vertices = [
       0,  1, 0,  // 0
@@ -127,50 +87,11 @@ const indices = [
       7, 9,
       8, 9,
     ];
-/*
-const img = await Load.image( 'pipeline.jpg' );
-const image =  game.$renderer.create({
-      indices: [
-            0,1,2,
-            0,2,3,
-       ],
-      vertices: [ 
-            -1,  1, 0,
-            -1, -1, 0,
-            1, -1, 0,
-            1,  1, 0,
-      ],
-      imageData: {
-            image: img,
-            textureCoords: [
-
-                  1,  1,
-                  0,  1, 
-                  0, 0,
-                  1, 0, 
-            ]
-      },
-      bonesData: {
-            bones: 3,
-            weights: [
-                  0, 0.2, 0.3, 0.1,
-                  0.1, 0.4, 0.3, 0.1,
-                  1, 0.2, 0.8, 0.1,
-            ],
-            indices: [
-                  0, 1, 2, 2,
-                  1, 0, 2, 2,
-                  0, 1, 1, 1,
-            ],
-            root: 0
-      },
-      perspective: true
-})
-*/
-const image =  game.$renderer.create({
+// create new object that will be rendered
+game.$renderable.image =  game.$renderer.create({
       vertices,
       indices,
-      staticColor: { r: 0, g: 1, b: 0.3, a: 1},
+      color,
       perspective: true,
       bonesData: {
             bones: 5,
@@ -180,21 +101,43 @@ const image =  game.$renderer.create({
       },
       primitive: Primitives.lines,
 })
-let i = 0;
-let j = 0;
-let val = 1;
-//game.debug.globalCamera();
- game.$renderer.append( 'img', image ).setAttributes('img', {
+const f = ()=>{
+      game.$renderer.setAttributes('img', {
+            translation: { x: 0, y: 0, z: -2},
+            scale: 0.1,
+            bones: {
+                  angle: [
+                        0, game.$refs.i, 0, game.$refs.i, 0
+                  ],
+      
+            }
+      });
+      game.$refs.i++;
+      game.$renderer.draw();
+}
+// create a scene
+game.$scenes.first = game.createScene();
+// set onEnter event
+game.$scenes.first.onEnter( e =>{
+      if( 'game' in e && e.game instanceof GameController ){ 
+            // initialize i or create it if not exist already
+            game.$refs.i = 0;
+            //setup debug camera
+            game.$debug.globalCamera();
+      }
+})
+// add an object to the scene and set its default attributes
+game.$scenes.first.attach('img', game.$renderable.image, {
       translation: { x: 0, y: 0, z: -2},
       scale: 0.1,
       bones: {
             angle: [
                   0, 60, 0, 0, 60
-            ]
+            ],
+
       }
-});
-const f = ()=>{
-       game.$renderer.draw();
-      requestAnimationFrame(f)
-}
-f();
+})
+// add function to the scene (it will be called when the scene is loaded)
+game.$scenes.first.execute( f );
+// finally, use the scene
+game.useScene(game.$scenes.first)

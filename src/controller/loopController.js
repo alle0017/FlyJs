@@ -1,31 +1,40 @@
 export class LoopController {
+    get delta() { return this._delta; }
+    set delta(value) { }
     constructor() {
-        this.id = 0;
+        this.loopId = 0;
         this.functions = [];
+        this._delta = 0;
+    }
+    executeFunctions() {
+        this.functions.forEach(fn => {
+            fn();
+        });
     }
     add(fn) {
-        this.functions.push({
-            function: fn,
-            id: this.id
-        });
-        return this.id++;
+        this.functions.push(fn);
     }
-    remove(fnId) {
-        let index = -1;
+    remove(fn) {
         this.functions.every((val, i) => {
-            if (val.id === fnId) {
-                index = i;
+            if (fn.toString() == val.toString()) {
+                this.functions.splice(i, 1);
                 return false;
             }
             return true;
         });
-        if (index >= 0)
-            this.functions.splice(index, 1);
-        return;
+    }
+    removeAll() {
+        this.functions = [];
     }
     execute() {
-        this.functions.forEach((node) => {
-            node.function();
-        });
+        const fn = (delta) => {
+            this._delta = delta;
+            this.executeFunctions();
+            this.loopId = requestAnimationFrame(fn);
+        };
+        this.loopId = requestAnimationFrame(fn);
+    }
+    stop() {
+        cancelAnimationFrame(this.loopId);
     }
 }

@@ -246,7 +246,7 @@ export class WebGPURenderer extends WebGPU {
     }
     append(name, obj) {
         this.objects.set(name, obj);
-        this.setAttributes(name, {});
+        this.setAttributes(name, obj.attributes);
         return this;
     }
     setAttributes(name, attributes) {
@@ -256,6 +256,8 @@ export class WebGPURenderer extends WebGPU {
             console.warn(`object ${name} does not exist`);
             return this;
         }
+        if (!attributes)
+            return this;
         obj.attributes = Object.assign(Object.assign({}, obj.attributes), attributes);
         const arrays = this.getArrays(obj.skeleton, obj.uniformsName, obj.attributes);
         if (arrays.uniformArray && obj.buffers.transformations) {
@@ -280,6 +282,9 @@ export class WebGPURenderer extends WebGPU {
         const obj = this.objects.get(name);
         this.objects.delete(name);
         return obj;
+    }
+    removeAll() {
+        this.objects.clear();
     }
     draw() {
         var _a, _b;

@@ -296,7 +296,7 @@ export class WebGPURenderer extends WebGPU {
       }
       append( name: string, obj: WebGPURenderable ): this {
             this.objects.set( name, obj );
-            this.setAttributes( name, {} );
+            this.setAttributes( name, obj.attributes );
             return this;
       }
       setAttributes( name: string, attributes: DrawOpt ): this {
@@ -305,6 +305,8 @@ export class WebGPURenderer extends WebGPU {
                   console.warn(`object ${name} does not exist`);
                   return this;
             }
+            if( !attributes ) 
+                  return this;
             obj.attributes = {
                   ...obj.attributes,
                   ...attributes
@@ -335,6 +337,9 @@ export class WebGPURenderer extends WebGPU {
             const obj = this.objects.get( name );
             this.objects.delete( name );
             return obj;
+      }
+      removeAll(): void {
+            this.objects.clear();
       }
       draw(): void {
             if( !this.renderPassDescriptor ) return;

@@ -1,9 +1,34 @@
 import { WebGLRenderer } from '../rendering/GLRenderer.js';
 import { WebGPURenderer } from '../rendering/GPURenderer.js';
 import { Debug } from './debug.js';
-import { LoopController } from './loopController.js';
+import { LoopController, } from './loopController.js';
+import { Scene } from './scene.js';
 export class GameController {
+    get $scene() {
+        return this._scene;
+    }
+    set $scene(scene) {
+        console.warn('the scene can be set only with useScene method');
+    }
+    get $scenes() {
+        return this.$assets.scenes;
+    }
+    set $scenes(scene) { }
+    get $images() {
+        return this.$assets.images;
+    }
+    set $images(images) { }
+    get $renderable() {
+        return this.$assets.renderable;
+    }
+    set $renderable(renderable) { }
     constructor() {
+        this.$assets = {
+            images: {},
+            renderable: {},
+            scenes: {},
+        };
+        this.$refs = {};
         this.cvs = document.createElement('canvas');
         if (!this.cvs)
             throw 'canvas cannot be created';
@@ -15,7 +40,8 @@ export class GameController {
         else
             this.$renderer = new WebGLRenderer(this.cvs);
         this.$debug = new Debug(this);
-        this.$LoopController = new LoopController();
+        this.$loopController = new LoopController();
+        this.$loopController.execute();
     }
     static async get() {
         if (!GameController.game) {
@@ -24,7 +50,18 @@ export class GameController {
         }
         return GameController.game;
     }
-    start() {
-        const worker = new Worker('./gameController.js');
+    useScene(scene) {
+        if (this._scene) {
+            this._scene.dismiss(GameController.game);
+        }
+        this.$renderer.removeAll();
+        const { functions, objects } = scene.use(GameController.game);
+        objects.forEach((object, key) => this.$renderer.append(key, object));
+        this.$loopController.removeAll();
+        functions.forEach(fn => this.$loopController.add(fn));
+        this._scene = scene;
+    }
+    createScene() {
+        return new Scene();
     }
 }
