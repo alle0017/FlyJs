@@ -1,5 +1,5 @@
-import { GameController } from 'controller/gameController.js';
-import { Types, WormHoleScene, game } from './wormHole.js';
+import { GameController } from './WormHole/controller/gameController.js';
+import { Types, WormHoleScene, game } from './WormHole/wormHole.js';
 
 
 const color =  [

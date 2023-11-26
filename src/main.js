@@ -1,4 +1,4 @@
-import { Types, WormHoleScene, game } from './wormHole.js';
+import { Types, WormHoleScene, game } from './WormHole/wormHole.js';
 const color = [
     1.0, 0.0, 0.0, 1.0,
     1.0, 1.0, 0.0, 1.0,
