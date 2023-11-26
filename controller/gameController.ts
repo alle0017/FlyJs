@@ -4,6 +4,7 @@ import { DrawableElementAttributes, DrawOpt, Color, Renderable } from '../render
 import { Debug } from './debug.js';
 import { LoopController, } from './loopController.js';
 import { Scene } from './scene.js';
+import { CustomScene } from './customScene.js';
 
 export type Assets = {
       images: {
@@ -34,42 +35,42 @@ interface Renderer {
 }
 export class GameController {
       private static game: GameController;
-      private readonly $loopController: LoopController;
-      readonly $renderer: Renderer;
-      readonly $debug: Debug;
-      readonly $assets: Assets = { 
+      readonly loopController: LoopController;
+      readonly renderer: Renderer;
+      readonly debug: Debug;
+      readonly assets: Assets = { 
             images: {},
             renderable: {},
             scenes: {},
       };
-      readonly $refs: References = {};
+      readonly refs: References = {};
       readonly cvs: HTMLCanvasElement;
       private _scene?: Scene;
-      get $scene(): Scene | undefined {
+      get scene(): Scene | undefined {
             return this._scene;
       }
-      set $scene( scene: Scene | undefined ){
+      set scene( scene: Scene | undefined ){
             console.warn( 'the scene can be set only with useScene method' );
       }
 
-      get $scenes(){
-            return this.$assets.scenes;
+      get scenes(){
+            return this.assets.scenes;
       }
-      set $scenes( scene: {
+      set scenes( scene: {
             [key: string]: Scene;
       } ){}
 
-      get $images(){
-            return this.$assets.images;
+      get images(){
+            return this.assets.images;
       }
-      set $images( images: {
+      set images( images: {
             [key: string]: ImageBitmap;
       }){}
 
-      get $renderable(){
-            return this.$assets.renderable;
+      get renderable(){
+            return this.assets.renderable;
       }
-      set $renderable( renderable: {
+      set renderable( renderable: {
             [key: string]: Renderable;
       }){}
 
@@ -81,31 +82,40 @@ export class GameController {
             this.cvs.height = 600;
             document.body.appendChild( this.cvs );
             if( 'gpu' in navigator )
-                  this.$renderer = new WebGPURenderer( this.cvs );
+                  this.renderer = new WebGPURenderer( this.cvs );
             else
-                  this.$renderer = new WebGLRenderer( this.cvs );
-            this.$debug = new Debug( this );
-            this.$loopController = new LoopController();
-            this.$loopController.execute();
+                  this.renderer = new WebGLRenderer( this.cvs );
+            this.debug = new Debug( this );
+            this.loopController = new LoopController();
+            this.loopController.execute();
       }
       static async get(): Promise<GameController> {
             if( !GameController.game ){
                   GameController.game = new GameController();
-                  await GameController.game.$renderer.init();
+                  await GameController.game.renderer.init();
             }
             return GameController.game;
       }
-      useScene( scene: Scene ): void {
+      useScene( scene: new ()=>CustomScene ): void;
+      useScene( scene: Scene ): void;
+      useScene( arg0: any ){
+
             if( this._scene ){
                   this._scene.dismiss( GameController.game );
             }
-            this.$renderer.removeAll();
-            const { functions, objects } = scene.use( GameController.game );
-            objects.forEach( (object,key)=> this.$renderer.append( key, object ) );
-            this.$loopController.removeAll();
-            functions.forEach( fn => this.$loopController.add( fn ) );
-            this._scene = scene;
+            this.renderer.removeAll();
+            this.loopController.removeAll();
+            if( arg0 instanceof Scene ){
+                  arg0.use( GameController.game );
+                  this._scene = arg0;
+            }else{
+                  const scene = new arg0();
+                  console.log()
+                  scene.use( GameController.game )
+                  this._scene = scene;
+            }
       }
+
       createScene(){
             return new Scene();
       }

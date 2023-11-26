@@ -1,8 +1,6 @@
-import { GameController } from './controller/gameController.js';
-import { Primitives } from './rendering/types.js';
+import { GameController } from 'controller/gameController.js';
+import { Types, WormHoleScene, game } from './wormHole.js';
 
-
-const game = await GameController.get();
 
 const color =  [
       
@@ -87,57 +85,51 @@ const indices = [
       7, 9,
       8, 9,
     ];
-// create new object that will be rendered
-game.$renderable.image =  game.$renderer.create({
-      vertices,
-      indices,
-      color,
-      perspective: true,
-      bonesData: {
-            bones: 5,
-            weights: weights,
-            indices: boneIndex,
-            root: 0
-      },
-      primitive: Primitives.lines,
-})
-const f = ()=>{
-      game.$renderer.setAttributes('img', {
-            translation: { x: 0, y: 0, z: -2},
-            scale: 0.1,
-            bones: {
-                  angle: [
-                        0, game.$refs.i, 0, game.$refs.i, 0
-                  ],
-      
-            }
-      });
-      game.$refs.i++;
-      game.$renderer.draw();
-}
-// create a scene
-game.$scenes.first = game.createScene();
-// set onEnter event
-game.$scenes.first.onEnter( e =>{
-      if( 'game' in e && e.game instanceof GameController ){ 
-            // initialize i or create it if not exist already
-            game.$refs.i = 0;
+class FirstScene extends WormHoleScene {
+      update(){
+            this.$renderer.setAttributes('img', {
+                  translation: { x: 0, y: 0, z: -2},
+                  scale: 0.1,
+                  bones: {
+                        angle: [
+                              0, this.$game.refs.i, 0, this.$game.refs.i, 0
+                        ],
+            
+                  }
+            });
+            this.$game.refs.i++;
+            this.$renderer.draw();
+      }
+      onCreate(game: GameController): void {
+            this.$game.renderable.image = this.$renderer.create({
+                  vertices,
+                  indices,
+                  color,
+                  perspective: true,
+                  bonesData: {
+                        bones: 5,
+                        weights: weights,
+                        indices: boneIndex,
+                        root: 0
+                  },
+                  primitive: Types.Primitives.lines,
+            });
+            this.$game.refs.i = 0;
             //setup debug camera
-            game.$debug.globalCamera();
+            this.$debug.globalCamera();
+            this.attach( 'img', this.$game.renderable.image, {
+                  translation: { x: 0, y: 0, z: -2},
+                  scale: 0.1,
+                  bones: {
+                        angle: [
+                              0, 60, 0, 0, 60
+                        ],
+            
+                  }
+            })
+            //this.execute( this.update );
       }
-})
-// add an object to the scene and set its default attributes
-game.$scenes.first.attach('img', game.$renderable.image, {
-      translation: { x: 0, y: 0, z: -2},
-      scale: 0.1,
-      bones: {
-            angle: [
-                  0, 60, 0, 0, 60
-            ],
-
-      }
-})
-// add function to the scene (it will be called when the scene is loaded)
-game.$scenes.first.execute( f );
+      onDestroyed(game: GameController): void {}
+}
 // finally, use the scene
-game.useScene(game.$scenes.first)
+game.useScene( FirstScene );

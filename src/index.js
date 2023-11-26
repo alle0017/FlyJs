@@ -1,0 +1,16 @@
+import { GameController } from "./controller/gameController.js";
+import { EventEmitter } from "./controller/eventController.js";
+import { Load as load } from "./controller/loadData.js";
+import { Entity as entity } from "./entities/entity.js";
+import { Sprite2D as sprite2d } from "./entities/sprite2D.js";
+import { Matrix as matrix } from "./rendering/matrix/matrices.js";
+const game = await GameController.get();
+export default game;
+export const $renderer = game.$renderer;
+export const $assets = game.$assets;
+export const $debug = game.$debug;
+export const $events = EventEmitter;
+export const Entity = entity;
+export const Sprite2D = sprite2d;
+export const Matrix = matrix;
+export const Load = load;
