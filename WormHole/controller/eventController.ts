@@ -1,6 +1,14 @@
 export type EventHandler = (e: { [key: string]: any;})=>void;
 export namespace EventEmitter {
       const events = new Map<string, EventHandler[]>();
+
+      enum ARROWS {
+            UP = 'ArrowUp',
+            DOWN = 'ArrowDown',
+            LEFT = 'ArrowLeft',
+            RIGHT = 'ArrowRight',
+      }
+      
       export function fire( name: string, message: { [key: string]: any;} ){
             const handlers = events.get(name);
             if( !handlers || handlers.length <= 0 )
@@ -29,5 +37,17 @@ export namespace EventEmitter {
       export function deleteEvent( name: string ){
             if( events.has( name ) )
                   events.delete( name );
+      }
+      export function onArrowUpPressed( handler: EventHandler ){
+            on( ARROWS.UP , handler );
+      }
+      export function onArrowDownPressed( handler: EventHandler ){
+            on( ARROWS.DOWN , handler );
+      }
+      export function onArrowLeftPressed( handler: EventHandler ){
+            on( ARROWS.LEFT , handler );
+      }
+      export function onArrowRightPressed( handler: EventHandler ){
+            on( ARROWS.RIGHT , handler );
       }
 }

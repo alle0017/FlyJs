@@ -5,6 +5,7 @@ import { Debug } from './debug.js';
 import { LoopController, } from './loopController.js';
 import { Scene } from './scene.js';
 import { CustomScene } from './customScene.js';
+import { EventEmitter } from './eventController.js';
 
 export type Assets = {
       images: {
@@ -38,6 +39,7 @@ export class GameController {
       readonly loopController: LoopController;
       readonly renderer: Renderer;
       readonly debug: Debug;
+      readonly events = EventEmitter;
       readonly assets: Assets = { 
             images: {},
             renderable: {},
@@ -88,6 +90,7 @@ export class GameController {
             this.debug = new Debug( this );
             this.loopController = new LoopController();
             this.loopController.execute();
+            this.setEvents();
       }
       static async get(): Promise<GameController> {
             if( !GameController.game ){
@@ -96,27 +99,31 @@ export class GameController {
             }
             return GameController.game;
       }
-      useScene( scene: new ()=>CustomScene ): void;
+      private setEvents(){
+            window.addEventListener('keydown', (e)=> this.events.fire(e.key, { game: this } ) );
+      }
+      useScene( scene: new (...args: any)=>CustomScene ): void;
+
       useScene( scene: Scene ): void;
+
       useScene( arg0: any ){
 
             if( this._scene ){
-                  this._scene.dismiss( GameController.game );
+                  this._scene.dismiss();
             }
             this.renderer.removeAll();
             this.loopController.removeAll();
             if( arg0 instanceof Scene ){
-                  arg0.use( GameController.game );
+                  arg0.use();
                   this._scene = arg0;
             }else{
-                  const scene = new arg0();
-                  console.log()
-                  scene.use( GameController.game )
+                  const scene = new arg0(this);
+                  scene.use()
                   this._scene = scene;
             }
       }
 
       createScene(){
-            return new Scene();
+            return new Scene( this );
       }
 }

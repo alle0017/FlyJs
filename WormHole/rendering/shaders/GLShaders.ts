@@ -193,8 +193,8 @@ export class WebGLShader extends Model.Shader {
             this.addUniform(UN.framePosition, WebGLShader.VEC2, WebGLShader.VERTEX);
 
             this.vCode.push( `
-                  texture_coords.x += ${UN.framePosition}.x;
-                  texture_coords.y += ${UN.framePosition}.y;
+                  v_text_coords.x += ${UN.framePosition}.x;
+                  v_text_coords.y += ${UN.framePosition}.y;
             ` );
 
             return this;

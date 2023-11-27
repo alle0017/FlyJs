@@ -104,6 +104,7 @@ export class WebGPURenderer extends WebGPU {
                         resource.texture = this.useImage( imageData.displacementMap! ).createView();
                   },
                   [BN.texture]: (resource: Resources)=>{
+                        
                         if( imageData )
                         resource.texture = this.useImage( imageData.image ).createView();
                   },
@@ -122,6 +123,7 @@ export class WebGPURenderer extends WebGPU {
                   },
                   [UNIFORM]: (resource: Resources)=>{
                         buffer = this.createBuffer({
+                              label: 'Uniform Buffer',
                               arrayByteLength: stride,
                               usage: BufferUsage.uniform,
                         });
@@ -249,7 +251,8 @@ export class WebGPURenderer extends WebGPU {
                         uniformArray.push( opt?.bumpScale || 1 );
                   },
                   [UN.framePosition]: ()=>{
-                        uniformArray.push( ...( opt?.animationVector || [ 0, 0 ] ) );
+                        uniformArray.push( ...( opt.animationVector || [ 0, 0 ] ) );
+                        uniformArray.push( 0,0 )
                   },
             };
             for( let name of uniformsName ){
@@ -264,6 +267,7 @@ export class WebGPURenderer extends WebGPU {
             const arrays = this.initArrays( opt );
             const attribs = this.setProgramAttributes( opt );
             if( attribs.renderFunctionAttribs.uniforms && attribs.renderFunctionAttribs.uniforms.buffer ){
+                  
                   this.device?.queue.writeBuffer( 
                         attribs.renderFunctionAttribs.uniforms.buffer, 
                         0,  
@@ -312,7 +316,7 @@ export class WebGPURenderer extends WebGPU {
                   ...attributes
             }
             const arrays = this.getArrays( obj.skeleton, obj.uniformsName, obj!.attributes );
-
+            
             if( arrays.uniformArray && obj.buffers.transformations ){
                   this.device?.queue.writeBuffer( obj.buffers.transformations!, 0,  new Float32Array( arrays.uniformArray ) );
             }

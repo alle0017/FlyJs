@@ -1,6 +1,7 @@
 import { Renderable } from "../rendering/types.js";
 import { GameController } from "../controller/gameController.js";
 import { Matrix } from '../rendering/matrix/matrices.js'
+import { game } from '../wormHole.js'
 
 export abstract class Entity {
       private static UNIQUE_ID = 0;
@@ -10,6 +11,7 @@ export abstract class Entity {
       private _y: number = 0;
       private _z: number = 0;
       private _id: string;
+
       appended: boolean = false;
 
       vx: number = 0;
@@ -18,7 +20,8 @@ export abstract class Entity {
       ax: number = 0;
       ay: number = 0;
       az: number = 0;
-      game?: GameController;
+
+      game: GameController;
 
       protected abstract _renderable: Renderable;
       get x(){
@@ -75,10 +78,19 @@ export abstract class Entity {
       set renderable(renderable: Renderable) {}
 
       constructor(){
-            GameController.get().then( value => this.game = value );
             this._id = Entity.COMMON_ID + Entity.UNIQUE_ID;
             Entity.UNIQUE_ID++;
+            this.game = game;
       }
-      abstract draw(): void;
-
+      abstract onDraw(): void;
+      abstract onDismiss(): void;
+      abstract onEnter(): void;
+}
+export function isEntity( obj: {} ): obj is Entity {
+      return 'id' in obj && 
+            'appended' in obj && 
+            'renderable' in obj && 
+            'onEnter' in obj &&
+            'onDismiss' in obj &&
+            'onDraw' in obj
 }

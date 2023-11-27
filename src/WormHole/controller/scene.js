@@ -1,42 +1,64 @@
 import { EventEmitter } from './eventController.js';
-import { Entity } from '../entities/entity.js';
+import { isEntity } from '../entities/entity.js';
 class Scene {
-    constructor() {
+    constructor(game) {
         this.objects = new Map();
         this.functions = [];
+        this.appended = false;
         this.id = Scene.SCENE_ID;
         Scene.SCENE_ID++;
+        this.$game = game;
     }
-    use(game) {
-        EventEmitter.fire(`scene_${this.id}_enter`, { game });
+    appendRenderable(key, object) {
+        this.$game.renderer.append(key, object);
+    }
+    appendEntity(object) {
+        object.onEnter();
+        this.$game.renderer.append(object.id, object.renderable);
+        object.appended = true;
+    }
+    use() {
+        this.appended = true;
+        EventEmitter.fire(`scene_${this.id}_enter`, { game: this.$game });
         this.objects.forEach((object, key) => {
-            if (object instanceof Entity) {
-                game.renderer.append(key, object.renderable);
-                object.appended = true;
+            if (isEntity(object)) {
+                this.appendEntity(object);
             }
             else {
-                game.renderer.append(key, object);
+                this.appendRenderable(key, object);
             }
         });
-        this.functions.forEach(fn => game.loopController.add(fn));
+        this.functions.forEach(fn => this.$game.loopController.add(fn));
     }
-    dismiss(game) {
-        EventEmitter.fire(`scene_${this.id}_dismiss`, { game });
+    dismiss() {
+        this.appended = false;
+        EventEmitter.fire(`scene_${this.id}_dismiss`, { game: this.$game });
         this.objects.forEach(object => {
-            if (object instanceof Entity)
+            if (isEntity(object)) {
                 object.appended = false;
+                object.onDismiss();
+            }
         });
     }
     attach(arg0, arg1, arg2) {
-        if (arg0 instanceof Entity) {
-            this.objects.set(arg0.id, arg0.renderable);
+        if (typeof arg0 !== 'string') {
+            this.objects.set(arg0.id, arg0);
             if (arg1)
                 arg0.renderable.attributes = arg1;
+            this.execute((arg0.onDraw).bind(arg0));
         }
         else {
             this.objects.set(arg0, arg1);
             if (arg2)
                 arg1.attributes = arg2;
+        }
+        if (!this.appended)
+            return;
+        if (typeof arg0 !== 'string') {
+            this.appendEntity(arg0);
+        }
+        else {
+            this.appendRenderable(arg0, arg1);
         }
     }
     execute(fn) {

@@ -117,8 +117,10 @@ export class WebGPU extends Model.Renderer {
                         resource = (el.texture as GPUTexture ).createView();
                   }else if( el.texture instanceof GPUExternalTexture || el.texture instanceof GPUSampler || el.texture instanceof GPUTextureView ){
                         resource = el.texture;
-                 } else if( el.buffer ){
-                        resource = { buffer: el.buffer };
+                  } else if( el.buffer ){
+                        resource = { 
+                              buffer: el.buffer,
+                        };
                   }else{
                         this.error( `bind group (uncaught type ${ el.texture} for resources )`, Types.RendererErrorType.creation )
                   }
@@ -155,6 +157,7 @@ export class WebGPU extends Model.Renderer {
             }
       }
       private bufferDescription( arrayByteLength: number, usage: number, label: string = 'buffer', mapped: boolean = false ): GPUBufferDescriptor {
+            
             return {
                   label: label,
                   size: (arrayByteLength + 3) & ~3,

@@ -3,8 +3,11 @@ export class LoopController {
       private loopId = 0;
       private functions: LoopedFunction[] = [];
       private _delta = 0;
+      private _prevTimestamp = 0;
       get delta(): number { return this._delta; }
       set delta(value: number) {}
+      get timeFromStart(): number { return this._prevTimestamp; }
+      set timeFromStart(value: number){}
       constructor(){}
       private executeFunctions(): void {
             this.functions.forEach( fn =>{
@@ -28,7 +31,8 @@ export class LoopController {
       }
       execute(){
             const fn: FrameRequestCallback = (delta: number)=>{
-                  this._delta = delta;
+                  this._delta = delta - this._prevTimestamp;
+                  this._prevTimestamp = delta;
                   this.executeFunctions();
                   this.loopId = requestAnimationFrame(fn);
             }

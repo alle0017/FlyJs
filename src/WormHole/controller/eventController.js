@@ -1,6 +1,13 @@
 export var EventEmitter;
 (function (EventEmitter) {
     const events = new Map();
+    let ARROWS;
+    (function (ARROWS) {
+        ARROWS["UP"] = "ArrowUp";
+        ARROWS["DOWN"] = "ArrowDown";
+        ARROWS["LEFT"] = "ArrowLeft";
+        ARROWS["RIGHT"] = "ArrowRight";
+    })(ARROWS || (ARROWS = {}));
     function fire(name, message) {
         const handlers = events.get(name);
         if (!handlers || handlers.length <= 0)
@@ -34,4 +41,20 @@ export var EventEmitter;
             events.delete(name);
     }
     EventEmitter.deleteEvent = deleteEvent;
+    function onArrowUpPressed(handler) {
+        on(ARROWS.UP, handler);
+    }
+    EventEmitter.onArrowUpPressed = onArrowUpPressed;
+    function onArrowDownPressed(handler) {
+        on(ARROWS.DOWN, handler);
+    }
+    EventEmitter.onArrowDownPressed = onArrowDownPressed;
+    function onArrowLeftPressed(handler) {
+        on(ARROWS.LEFT, handler);
+    }
+    EventEmitter.onArrowLeftPressed = onArrowLeftPressed;
+    function onArrowRightPressed(handler) {
+        on(ARROWS.RIGHT, handler);
+    }
+    EventEmitter.onArrowRightPressed = onArrowRightPressed;
 })(EventEmitter || (EventEmitter = {}));

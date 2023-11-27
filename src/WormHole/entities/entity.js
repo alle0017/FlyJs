@@ -1,5 +1,5 @@
-import { GameController } from "../controller/gameController.js";
 import { Matrix } from '../rendering/matrix/matrices.js';
+import { game } from '../wormHole.js';
 class Entity {
     get x() {
         return this._x;
@@ -70,11 +70,19 @@ class Entity {
         this.ax = 0;
         this.ay = 0;
         this.az = 0;
-        GameController.get().then(value => this.game = value);
         this._id = Entity.COMMON_ID + Entity.UNIQUE_ID;
         Entity.UNIQUE_ID++;
+        this.game = game;
     }
 }
 Entity.UNIQUE_ID = 0;
 Entity.COMMON_ID = 'ENTITY_';
 export { Entity };
+export function isEntity(obj) {
+    return 'id' in obj &&
+        'appended' in obj &&
+        'renderable' in obj &&
+        'onEnter' in obj &&
+        'onDismiss' in obj &&
+        'onDraw' in obj;
+}

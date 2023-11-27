@@ -1,10 +1,13 @@
 export class LoopController {
     get delta() { return this._delta; }
     set delta(value) { }
+    get timeFromStart() { return this._prevTimestamp; }
+    set timeFromStart(value) { }
     constructor() {
         this.loopId = 0;
         this.functions = [];
         this._delta = 0;
+        this._prevTimestamp = 0;
     }
     executeFunctions() {
         this.functions.forEach(fn => {
@@ -28,7 +31,8 @@ export class LoopController {
     }
     execute() {
         const fn = (delta) => {
-            this._delta = delta;
+            this._delta = delta - this._prevTimestamp;
+            this._prevTimestamp = delta;
             this.executeFunctions();
             this.loopId = requestAnimationFrame(fn);
         };

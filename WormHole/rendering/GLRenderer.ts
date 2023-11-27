@@ -343,7 +343,7 @@ export class WebGLRenderer extends WebGL {
                         bumpScale.value = obj.attributes?.bumpScale || 1;
                   },
                   [UN.framePosition]: ()=>{
-                        const animationVec = obj.uniforms.get(UN.bumpScale);
+                        const animationVec = obj.uniforms.get(UN.framePosition);
                         if( !animationVec ){
                               console.warn( 'cannot use animation' );
                               return;
@@ -359,7 +359,6 @@ export class WebGLRenderer extends WebGL {
                         bonesMat.value = this.setSkeleton( obj.skeleton, obj.attributes );
                   }
             };
-            console.log( obj.uniforms )
             for( let name of obj.uniforms.keys() ){
                   if( name in setters )
                         setters[ name as UN ]();

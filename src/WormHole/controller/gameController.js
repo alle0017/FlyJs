@@ -3,6 +3,7 @@ import { WebGPURenderer } from '../rendering/GPURenderer.js';
 import { Debug } from './debug.js';
 import { LoopController, } from './loopController.js';
 import { Scene } from './scene.js';
+import { EventEmitter } from './eventController.js';
 export class GameController {
     get scene() {
         return this._scene;
@@ -23,6 +24,7 @@ export class GameController {
     }
     set renderable(renderable) { }
     constructor() {
+        this.events = EventEmitter;
         this.assets = {
             images: {},
             renderable: {},
@@ -42,6 +44,7 @@ export class GameController {
         this.debug = new Debug(this);
         this.loopController = new LoopController();
         this.loopController.execute();
+        this.setEvents();
     }
     static async get() {
         if (!GameController.game) {
@@ -50,24 +53,26 @@ export class GameController {
         }
         return GameController.game;
     }
+    setEvents() {
+        window.addEventListener('keydown', (e) => this.events.fire(e.key, { game: this }));
+    }
     useScene(arg0) {
         if (this._scene) {
-            this._scene.dismiss(GameController.game);
+            this._scene.dismiss();
         }
         this.renderer.removeAll();
         this.loopController.removeAll();
         if (arg0 instanceof Scene) {
-            arg0.use(GameController.game);
+            arg0.use();
             this._scene = arg0;
         }
         else {
-            const scene = new arg0();
-            console.log();
-            scene.use(GameController.game);
+            const scene = new arg0(this);
+            scene.use();
             this._scene = scene;
         }
     }
     createScene() {
-        return new Scene();
+        return new Scene(this);
     }
 }

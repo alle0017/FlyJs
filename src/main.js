@@ -1,4 +1,4 @@
-import { Types, WormHoleScene, game } from './WormHole/wormHole.js';
+import { WormHoleScene, game, WormHoleSprite2D, Load, bug } from './WormHole/wormHole.js';
 const color = [
     1.0, 0.0, 0.0, 1.0,
     1.0, 1.0, 0.0, 1.0,
@@ -76,45 +76,63 @@ const indices = [
     7, 9,
     8, 9,
 ];
+game.assets.images.img = await Load.image('./otherStuff/prova.png');
+class mySprite extends WormHoleSprite2D {
+    constructor() {
+        super({
+            image: game.assets.images.img,
+            frames: 4,
+            costumes: 4,
+        });
+        this.time = 600;
+        this.nextFrameTime = 60;
+    }
+    onDraw() {
+        this.animate(this.game.loopController.timeFromStart);
+    }
+    onDismiss() {
+        throw new Error('Method not implemented.');
+    }
+    onEnter() {
+        bug();
+        this.game.refs.costumes = 0;
+        this.costume = 3;
+    }
+    animate(delta) {
+        if (delta < this.nextFrameTime)
+            return;
+        this.nextFrameTime = delta + this.time;
+        this.frame = this.game.refs.costumes;
+        this.game.refs.costumes++;
+        if (this.game.refs.costumes >= this.costumes)
+            this.game.refs.costumes = 0;
+    }
+}
 class FirstScene extends WormHoleScene {
     update() {
-        this.$renderer.setAttributes('img', {
-            translation: { x: 0, y: 0, z: -2 },
-            scale: 0.1,
-            bones: {
-                angle: [
-                    0, this.$game.refs.i, 0, this.$game.refs.i, 0
-                ],
-            }
-        });
-        this.$game.refs.i++;
         this.$renderer.draw();
     }
     onCreate(game) {
-        this.$game.renderable.image = this.$renderer.create({
-            vertices,
-            indices,
-            color,
-            perspective: true,
-            bonesData: {
-                bones: 5,
-                weights: weights,
-                indices: boneIndex,
-                root: 0
-            },
-            primitive: Types.Primitives.lines,
-        });
         this.$game.refs.i = 0;
         //setup debug camera
         this.$debug.globalCamera();
-        this.attach('img', this.$game.renderable.image, {
-            translation: { x: 0, y: 0, z: -2 },
-            scale: 0.1,
-            bones: {
-                angle: [
-                    0, 60, 0, 0, 60
-                ],
-            }
+        const sprite = new mySprite();
+        this.attach(sprite);
+        this.$events.onArrowLeftPressed(() => {
+            sprite.x -= 0.05;
+            sprite.costume = 1;
+        });
+        this.$events.onArrowRightPressed(() => {
+            sprite.x += 0.05;
+            sprite.costume = 2;
+        });
+        this.$events.onArrowUpPressed(() => {
+            sprite.y += 0.05;
+            sprite.costume = 0;
+        });
+        this.$events.onArrowDownPressed(() => {
+            sprite.y -= 0.05;
+            sprite.costume = 3;
         });
         //this.execute( this.update );
     }

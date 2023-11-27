@@ -2,49 +2,74 @@ import { LoopController, LoopedFunction } from './loopController.js';
 import { DrawOpt, Renderable } from '../rendering/types.js';
 import { EventEmitter, EventHandler } from './eventController.js';
 import { GameController } from './gameController.js';
-import { Entity } from '../entities/entity.js';
+import { isEntity, Entity } from '../entities/entity.js';
+
+
 
 export class Scene {
       private static SCENE_ID = 0;
       protected id: number;
       protected objects: Map<string,Renderable | Entity> = new Map<string,Renderable | Entity>();
       private functions: LoopedFunction[] = [];
-      constructor(){
+      private appended: boolean = false;
+      protected readonly $game;
+
+      constructor( game: GameController ){
             this.id = Scene.SCENE_ID;
             Scene.SCENE_ID++;
+            this.$game = game;
       }
-      use( game: GameController ){
-            EventEmitter.fire( `scene_${this.id}_enter`, { game } );
+      private appendRenderable( key: string, object: Renderable ){
+            this.$game.renderer.append( key, object )
+      }
+      private appendEntity( object: Entity ){
+            object.onEnter();
+            this.$game.renderer.append( object.id, object.renderable ) 
+            object.appended = true;
+      }
+      use(){
+            this.appended = true;
+            EventEmitter.fire( `scene_${this.id}_enter`, { game: this.$game } );
             this.objects.forEach( (object,key)=>{ 
-                  if( object instanceof Entity ){
-                        game.renderer.append( key, object.renderable ) 
-                        object.appended = true;
+                  if( isEntity( object ) ){
+                        this.appendEntity( object )
                   }else{
-                        game.renderer.append( key, object )
+                        this.appendRenderable( key, object );
                   }
             });
-            this.functions.forEach( fn => game.loopController.add( fn ) );
+            this.functions.forEach( fn => this.$game.loopController.add( fn ) );
       }
-      dismiss( game: GameController ){
-            EventEmitter.fire( `scene_${this.id}_dismiss`, { game } );
+      dismiss(){
+            this.appended = false;
+            EventEmitter.fire( `scene_${this.id}_dismiss`, { game: this.$game } );
             this.objects.forEach( object => { 
-                  if( object instanceof Entity )
+                  if( isEntity(object) ){
                         object.appended = false;
+                        object.onDismiss();
+                  }
             });
       }
       attach( name: string, object: Renderable, attributes?: DrawOpt ): void;
       attach( entity: Entity, attributes?: DrawOpt ): void;
       attach( arg0: any, arg1: any, arg2?: any ){
-            if( arg0 instanceof Entity ){
-                  this.objects.set( arg0.id, arg0.renderable );
+            if( typeof arg0 !== 'string' ){
+                  this.objects.set( arg0.id, arg0 );
                   if( arg1 )
                         arg0.renderable.attributes = arg1;
+                  this.execute( (arg0.onDraw).bind(arg0) )
             }
             else{
                   this.objects.set( arg0, arg1 );
                   if( arg2 )
                         arg1.attributes = arg2;
             }
+            if( !this.appended ) return;
+            if( typeof arg0 !== 'string' ){
+                  this.appendEntity( arg0 ); 
+            }else{
+                  this.appendRenderable( arg0, arg1 );
+            }
+
       }
       execute( fn: LoopedFunction ){
             this.functions.push( fn );

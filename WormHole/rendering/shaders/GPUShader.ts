@@ -118,6 +118,8 @@ export class WebGPUShader extends Model.Shader {
             this.attributeBindingLocation = 0;
             this.groupBindingLocation = 0;
             this.uniformBindingLocation = -1;
+            this.uniformOffset = 0;
+            this.attribOffset = 0;
 
             this.fragmentReturnedValue = '';
             this.vertexReturnedValue = '';
@@ -261,13 +263,10 @@ export class WebGPUShader extends Model.Shader {
             }
 
             this
-            .useTexture()
-            .addUniform(UN.framePosition, WebGPUShader.VEC2);
+            .addUniform( UN.framePosition, WebGPUShader.VEC4 )
 
-            this.fCode.push(`
-            ${this.VARYING_VARIABLE}.texture_coords.x += ${this.UNIFORMS_VARIABLE}.${UN.framePosition}.x;
-            ${this.VARYING_VARIABLE}.texture_coords.y += ${this.UNIFORMS_VARIABLE}.${UN.framePosition}.y; 
-            `);
+            this.vCode.push(
+                  `out.texture_coords += ${this.UNIFORMS_VARIABLE}.${UN.framePosition}.xy;`)
             return this;
       }
       useTexture(): this {
