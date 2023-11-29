@@ -1,7 +1,7 @@
 import { Renderable } from "../rendering/types.js";
 import { GameController } from "../controller/gameController.js";
 import { Matrix } from '../rendering/matrix/matrices.js'
-import { game } from '../wormHole.js'
+import { game } from '../fly.js'
 
 export abstract class Entity {
       private static UNIQUE_ID = 0;

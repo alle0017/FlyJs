@@ -72,10 +72,10 @@ export abstract class Sprite2D extends Entity {
                   descriptor.imageData = {
                         image: opt.image,
                         textureCoords: [
-                              1/this.frames, 0,
-                              0, 0,
                               0, 1/this.costumes,
                               1/this.frames, 1/this.costumes,
+                              1/this.frames, 0,
+                              0, 0,
                         ],
                   };
                   const rect = Shapes.rectangle( 0.15, 0.2 )

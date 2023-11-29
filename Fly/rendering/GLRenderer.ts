@@ -49,6 +49,7 @@ export class WebGLRenderer extends WebGL {
       private _clearColor: Color = { r: 0, g: 0, b: 0, a: 1 };
 
       private _culling: boolean = false;
+      private transparency: boolean = false;
 
       get culling(): boolean {
             return this._culling;
@@ -165,16 +166,15 @@ export class WebGLRenderer extends WebGL {
             else{
                   this.error( `texture (${name} for texture is not defined in WebGL)`, RendererErrorType.creation );
             }
+
             const texture = this.gl.createTexture() as WebGLTexture;
             if( !texture )
                   this.error( 'texture', RendererErrorType.creation );
             
+            
             this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-
+            this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+            //console.log( this.gl.getParameter( this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL ) );
             this.gl.texImage2D( 
                   this.gl.TEXTURE_2D, 
                   0, 
@@ -183,6 +183,14 @@ export class WebGLRenderer extends WebGL {
                   this.gl.UNSIGNED_BYTE, 
                   img! as ImageBitmap
             );
+            
+
+            
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+            
             return texture;
       }
       private isTexture( type: string ): boolean {
@@ -411,7 +419,14 @@ export class WebGLRenderer extends WebGL {
                   draw();
             }
       }
-      
+      private getMinZ( vertices: number[] ){
+            let z = vertices[2]
+            for( let i = 2; i < vertices.length; i+=3 ){
+                  if( vertices[i] < z )
+                        z = vertices[i]
+            }
+            return z;
+      }
       create( opt: DrawableElementAttributes ): WebGLRenderable {
             const programInfos = this.setProgramAttributes( opt );
             const skeleton = this.initArrays( programInfos.uniforms, opt );
@@ -420,11 +435,19 @@ export class WebGLRenderer extends WebGL {
                   skeleton,
                   uniforms: programInfos.uniforms,
                   attributes: {},
+                  transparent: opt.imageData? true: false,
+                  z: this.getMinZ( opt.vertices )
+
             }
       }
       append( name: string, obj: WebGLRenderable ): this {
             this.objects.set( name, obj );
-            this.setAttributes( name, {} );
+            this.setAttributes( name, obj.attributes );
+            if( obj.transparent ){
+                  this.transparency = true;
+                  this.gl.enable( this.gl.BLEND )
+                  this.gl.blendFunc( this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA );
+            }
             return this;
       }
       remove( name: string ): WebGLRenderable | undefined {
@@ -438,6 +461,7 @@ export class WebGLRenderer extends WebGL {
       }
       removeAll(): void {
             this.objects.clear();
+            this.transparency = false;
       }
       setAttributes( name: string, opt: DrawOpt ): this {
             const obj = this.objects.get( name );
@@ -458,8 +482,35 @@ export class WebGLRenderer extends WebGL {
             }
             return this;
       }
-      draw(): void {
+      private sortTransparent(): WebGLRenderable[] {
+            const sorted: WebGLRenderable[] = [];
+            const others: WebGLRenderable[] = [];
+            if( !this.transparency ){
+                  return [...this.objects.values()];
+            }
             for( let el of this.objects.values() ){
+                  if( !el.transparent ){
+                        others.push( el );
+                        continue;
+                  }
+                  let i;
+                  // second-last element is the 15th element
+                  const zTranslationTested = el.attributes.translationMatrix? el.attributes.translationMatrix![14]: 0;
+                  for( i = 0; i < sorted.length ; i++ ){
+                        // second-last element is the 15th element
+                        // values to switch with
+                        const zTranslationTemp = sorted[i].attributes.translationMatrix? sorted[i].attributes.translationMatrix![14]: 0;
+                        if( sorted[i].z + zTranslationTemp > el.z + zTranslationTested ){
+                              break;
+                        }
+                  }
+                  sorted.splice( i , 0, el );
+            }
+            return [ ...others, ...sorted ];
+      }
+      draw(): void {
+            const sortedObj = this.sortTransparent();
+            for( let el of sortedObj ){
                   (el.function as ( arg0: DrawOpt )=>void)( el.attributes );
             }
       }

@@ -83,10 +83,13 @@ export class GameController {
             this.cvs.width = 800;
             this.cvs.height = 600;
             document.body.appendChild( this.cvs );
-            if( 'gpu' in navigator )
+            if( 'gpu' in navigator ){
                   this.renderer = new WebGPURenderer( this.cvs );
-            else
+                  console.log('%cgpu enabled', 'color: #ff9933')
+            }else{
                   this.renderer = new WebGLRenderer( this.cvs );
+                  console.log('%cgl enabled', 'color: #9999ff')
+            }
             this.debug = new Debug( this );
             this.loopController = new LoopController();
             this.loopController.execute();

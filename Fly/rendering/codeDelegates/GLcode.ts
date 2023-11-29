@@ -12,7 +12,9 @@ export class WebGL extends Model.Renderer {
       set antialias( value: boolean ){
             if( value !== this._antialias ){
                   this._antialias = value;
-                  this.gl = this.gl.canvas.getContext('webgl', {antialias: this._antialias}) as WebGLRenderingContext;
+                  this.gl = this.gl.canvas.getContext('webgl', {
+                        antialias: this._antialias,
+                  }) as WebGLRenderingContext;
                   if( !this.gl ){
                         throw 'No Context available';
                   }

@@ -42,6 +42,8 @@ export class WebGPURenderer extends WebGPU {
       protected renderPassDescriptor?: GPURenderPassDescriptor;
       private view: ViewDelegate;
 
+      private transparency: boolean = false;
+
       constructor( cvs: HTMLCanvasElement ){
             super( cvs );
             this.view = new ViewDelegate( this.cvs.width/this.cvs.height );
@@ -88,8 +90,8 @@ export class WebGPURenderer extends WebGPU {
 
             });
             this.device?.queue.copyExternalImageToTexture(
-                  { source: image, flipY: true },
-                  { texture },
+                  { source: image, flipY: false, },
+                  { texture, premultipliedAlpha: true },
                   { width: image.width, height: image.height },
             );
             return texture;
@@ -263,6 +265,14 @@ export class WebGPURenderer extends WebGPU {
                   bonesArray: this.setSkeleton( bones, opt )
             };
       }
+      private getMinZ( vertices: number[] ){
+            let z = vertices[2]
+            for( let i = 2; i < vertices.length; i+=3 ){
+                  if( vertices[i] < z )
+                        z = vertices[i]
+            }
+            return z;
+      }
       create( opt: DrawableElementAttributes ): WebGPURenderable {
             const arrays = this.initArrays( opt );
             const attribs = this.setProgramAttributes( opt );
@@ -295,11 +305,15 @@ export class WebGPURenderer extends WebGPU {
                   },
                   skeleton: arrays.skeleton,
                   uniformsName: attribs.uniformsName,
-                  attributes: {}
+                  attributes: {},
+                  transparent: opt.imageData? true: false,
+                  z: this.getMinZ( opt.vertices )
             }
       }
       append( name: string, obj: WebGPURenderable ): this {
             this.objects.set( name, obj );
+            if( obj.transparent )
+                  this.transparency = true;
             this.setAttributes( name, obj.attributes );
             return this;
       }
@@ -344,15 +358,43 @@ export class WebGPURenderer extends WebGPU {
       }
       removeAll(): void {
             this.objects.clear();
+            this.transparency = false;
+      }
+      private sortTransparent(): WebGPURenderable[] {
+            const sorted: WebGPURenderable[] = [];
+            const others: WebGPURenderable[] = [];
+            if( !this.transparency ){
+                  return [...this.objects.values()];
+            }
+            for( let el of this.objects.values() ){
+                  if( !el.transparent ){
+                        others.push( el );
+                        continue;
+                  }
+                  let i;
+                  // second-last element is the 15th element
+                  const zTranslationTested = el.attributes.translationMatrix? el.attributes.translationMatrix![14]: 0;
+                  for( i = 0; i < sorted.length ; i++ ){
+                        // second-last element is the 15th element
+                        // values to switch with
+                        const zTranslationTemp = sorted[i].attributes.translationMatrix? sorted[i].attributes.translationMatrix![14]: 0;
+                        if( sorted[i].z + zTranslationTemp > el.z + zTranslationTested ){
+                              break;
+                        }
+                  }
+                  sorted.splice( i , 0, el );
+            }
+            return [ ...others, ...sorted ];
       }
       draw(): void {
+            const objects = this.sortTransparent();
             if( !this.renderPassDescriptor ) return;
             this.setRenderPassDescriptorView( this.renderPassDescriptor, true );
             const encoder = this.device?.createCommandEncoder();
             if( !encoder ) 
                   return;
             const pass = encoder.beginRenderPass( this.renderPassDescriptor );
-            for( let el of this.objects.values() )
+            for( let el of objects )
                   el.function( pass )
             pass.end()
             this.device?.queue.submit( [encoder.finish()] );

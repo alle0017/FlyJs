@@ -66,8 +66,6 @@ export class ViewDelegate {
       private selectTranslationMatrix(opt: DrawOpt): number[] | null{
             if(opt.translationMatrix){
                   return opt.translationMatrix;
-            }else if(opt.translation){
-                  return Matrix.translate(opt.translation);
             }
             return null;
       }

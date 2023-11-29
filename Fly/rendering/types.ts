@@ -97,7 +97,7 @@ export type DrawOpt = Partial<{
       /**
        * 3d vector that translate (moves) the element in the space
        */
-      translation: Point3D;
+      //translation: Point3D;
       /**
        * projection matrix 
        * @TODO add someway of projection matrix generation in Matrix
@@ -196,13 +196,17 @@ export type WebGPURenderable = {
       buffers: {
             bones: GPUBuffer | undefined,
             transformations: GPUBuffer | undefined
-      }
+      },
+      z: number,
+      transparent: boolean
 }
 export type WebGLRenderable = {
       function: (arg0: any) => void,
       skeleton: Skeleton,
       uniforms: Map<string, UniformsInfo>,
       attributes: DrawOpt,
+      z: number,
+      transparent: boolean
 }
 export type Renderable = WebGPURenderable | WebGLRenderable;
 export type RenderableArrays = {

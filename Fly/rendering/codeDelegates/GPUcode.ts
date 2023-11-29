@@ -35,7 +35,7 @@ export class WebGPU extends Model.Renderer {
             r: 0,
             g: 0,
             b: 0,
-            a: 1
+            a: 1,
       }
 
       get culling(): boolean { return this._culling; }
@@ -195,8 +195,19 @@ export class WebGPU extends Model.Renderer {
                         module: shaderModule,
                         entryPoint: opt.fEntryPoint || 'fragment_shader',
                         targets: [{
-                              format: this.canvasFormat as GPUTextureFormat
-                        }]
+                              format: this.canvasFormat as GPUTextureFormat,
+                              //used for enable alpha in images
+                              blend: {
+                                    alpha: {
+                                          dstFactor: 'one-minus-src-alpha',
+                                          srcFactor: 'src-alpha'
+                                    },
+                                    color: {
+                                          dstFactor: 'one-minus-src-alpha',
+                                          srcFactor: 'src-alpha'
+                                    }
+                              }
+                        }],
                   },
                   primitive: {
                         topology: this.getPrimitive( opt.topology || Types.Primitives.triangles ),
@@ -220,8 +231,6 @@ export class WebGPU extends Model.Renderer {
             return description;
       }
       protected setRenderPassDescriptorView( renderPassDescriptor: GPURenderPassDescriptor, enableDepth: boolean = true ): GPURenderPassDescriptor {
-            /*if( enableDepth && renderPassDescriptor.depthStencilAttachment )
-                  renderPassDescriptor.depthStencilAttachment.view = this.depthTexture?.createView() as GPUTextureView;*/
             if (this._antialias === 1) {
                   (renderPassDescriptor.colorAttachments as GPURenderPassColorAttachment[])[0].view = this.ctx.getCurrentTexture().createView();
                   return renderPassDescriptor;
