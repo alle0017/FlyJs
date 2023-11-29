@@ -7,7 +7,8 @@ export var EventEmitter;
         ARROWS["DOWN"] = "ArrowDown";
         ARROWS["LEFT"] = "ArrowLeft";
         ARROWS["RIGHT"] = "ArrowRight";
-    })(ARROWS || (ARROWS = {}));
+    })(ARROWS = EventEmitter.ARROWS || (EventEmitter.ARROWS = {}));
+    EventEmitter.KEY_UP = 'KeyUp';
     function fire(name, message) {
         const handlers = events.get(name);
         if (!handlers || handlers.length <= 0)
@@ -57,4 +58,8 @@ export var EventEmitter;
         on(ARROWS.RIGHT, handler);
     }
     EventEmitter.onArrowRightPressed = onArrowRightPressed;
+    function onKeyRelease(handler) {
+        on(EventEmitter.KEY_UP, handler);
+    }
+    EventEmitter.onKeyRelease = onKeyRelease;
 })(EventEmitter || (EventEmitter = {}));

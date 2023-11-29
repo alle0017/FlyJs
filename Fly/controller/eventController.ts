@@ -2,12 +2,13 @@ export type EventHandler = (e: { [key: string]: any;})=>void;
 export namespace EventEmitter {
       const events = new Map<string, EventHandler[]>();
 
-      enum ARROWS {
+      export enum ARROWS {
             UP = 'ArrowUp',
             DOWN = 'ArrowDown',
             LEFT = 'ArrowLeft',
             RIGHT = 'ArrowRight',
       }
+      export const KEY_UP = 'KeyUp';
       
       export function fire( name: string, message: { [key: string]: any;} ){
             const handlers = events.get(name);
@@ -49,5 +50,8 @@ export namespace EventEmitter {
       }
       export function onArrowRightPressed( handler: EventHandler ){
             on( ARROWS.RIGHT , handler );
+      }
+      export function onKeyRelease( handler: EventHandler ){
+            on( KEY_UP, handler );
       }
 }

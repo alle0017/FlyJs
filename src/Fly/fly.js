@@ -29,6 +29,7 @@ export const FlyScene = CustomScene;
 export const bug = (obj) => {
     if (!obj) {
         console.log(obj);
+        console.trace();
         return;
     }
     console.log(`%c${obj.constructor.name}:`, 'color: #2f2; font-size: larger;');

@@ -33,9 +33,10 @@ export const Scene = scene;
 export const Shapes = shapes;
 
 export const FlyScene = CustomScene;
-export const bug = (obj: Object) =>{
+export const bug = ( obj?: unknown ) =>{
       if( !obj ){
             console.log( obj );
+            console.trace();
             return;
       }
       console.log(`%c${obj.constructor.name}:` , 'color: #2f2; font-size: larger;');

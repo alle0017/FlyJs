@@ -1,5 +1,6 @@
 import { Primitives, Axis } from "../rendering/types.js";
 import { Camera } from "../rendering/matrix/camera.js";
+import { Matrix } from "../rendering/matrix/matrices.js";
 export class Debug {
     constructor(game) {
         this.game = game;
@@ -83,7 +84,7 @@ export class Debug {
         });
         this.game.renderer.append(this.DEBUG_GRID_XY, grid);
         this.game.renderer.setAttributes(this.DEBUG_GRID_XY, {
-            translation: { x: -15, y: -15, z: -1 },
+            translationMatrix: Matrix.translate({ x: -15, y: -15, z: -1 }),
         });
     }
     drawXZGrid(color = { r: 1, g: 0, b: 0, a: 1 }) {
@@ -102,7 +103,7 @@ export class Debug {
         });
         this.game.renderer.append(this.DEBUG_GRID_XZ, grid);
         this.game.renderer.setAttributes(this.DEBUG_GRID_XZ, {
-            translation: { x: 0, y: 1, z: -15 },
+            translationMatrix: Matrix.translate({ x: 0, y: 1, z: -15 })
         });
     }
     drawYZGrid(color = { r: 1, g: 0, b: 0, a: 1 }) {
@@ -120,7 +121,7 @@ export class Debug {
         });
         this.game.renderer.append(this.DEBUG_GRID_YZ, grid);
         this.game.renderer.setAttributes(this.DEBUG_GRID_YZ, {
-            translation: { x: 1, y: 0, z: -1 },
+            translationMatrix: Matrix.translate({ x: 1, y: 0, z: -1 })
         });
     }
     globalCamera() {

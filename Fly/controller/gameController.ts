@@ -104,6 +104,7 @@ export class GameController {
       }
       private setEvents(){
             window.addEventListener('keydown', (e)=> this.events.fire(e.key, { game: this } ) );
+            window.addEventListener('keyup', (e)=> this.events.fire( this.events.KEY_UP, { game: this } ) );
       }
       useScene( scene: new (...args: any)=>CustomScene ): void;
 

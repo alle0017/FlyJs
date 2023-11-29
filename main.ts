@@ -87,8 +87,10 @@ const indices = [
     ];
 game.assets.images.img = await Load.image('./otherStuff/prova.png')
 class mySprite extends FlySprite2D {
-      private time = 60;
+      private time = 100;
       private nextFrameTime = 60;
+      private currCostume = 0;
+      doAnimation = false;
       constructor(){
             super({ 
                   image: game.assets.images.img,
@@ -104,18 +106,19 @@ class mySprite extends FlySprite2D {
             throw new Error('Method not implemented.');
       }
       onEnter(): void {
-            bug(this);
-            this.game.refs.costumes = 0;
+            bug();
             this.costume = 3
       }
       animate( delta: number ){
-            if( delta < this.nextFrameTime ) return;
+            if( !this.doAnimation || delta < this.nextFrameTime ) return;
             this.nextFrameTime = delta + this.time;
-            this.frame = this.game.refs.costumes;
-            this.game.refs.costumes ++;
+            this.frame = this.currCostume;
+            this.currCostume ++;
 
-            if( this.game.refs.costumes >= this.costumes )
-                  this.game.refs.costumes = 0
+            if( this.currCostume >= this.costumes ){
+                  this.currCostume = 0
+                  this.doAnimation = false;
+            }
       }
       
 }
@@ -139,31 +142,39 @@ class FirstScene extends FlyScene {
             sprite2.costume = 3;
             const bg = this.$renderer.create({
                   ...Shapes.rectangle(100, 100, { x: 0, y: 0, z: -10}),
-                  staticColor: { r: 0, g: 1, b: 0, a: 1},
+                  staticColor: { r: 0.4, g: 0.8, b: 0.5, a: 1},
                   perspective: true,
             })
 
             this.attach( 'bg', bg );
 
-            this.attach( sprite )
             this.attach( sprite2 )
+            this.attach( sprite )
+
 
             this.$events.onArrowLeftPressed( ()=>{
                   sprite.x -= 0.05;
                   sprite.costume = 1
+                  sprite.doAnimation = true;
             });
             this.$events.onArrowRightPressed( ()=>{
                   sprite.x += 0.05;
                   sprite.costume = 2
+                  sprite.doAnimation = true;
             });
             this.$events.onArrowUpPressed(()=>{
                   sprite.y += 0.05;
-                  sprite.z += 0.05;
                   sprite.costume = 3
+                  sprite.doAnimation = true;
             })
             this.$events.onArrowDownPressed(()=>{
                   sprite.y -= 0.05;
                   sprite.costume = 0
+                  sprite.doAnimation = true;
+            })
+            this.$events.onKeyRelease( ()=>{
+                  sprite.doAnimation = false;
+                  sprite.frame = 0;
             })
             //this.execute( this.update );
       }
@@ -172,18 +183,43 @@ class FirstScene extends FlyScene {
 // finally, use the scene
 game.useScene( FirstScene );
 /**
-  <defs>
+<!-- sample rectangle -->
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
   <linearGradient id="linear" x1="0%" y1="100%" x2="0%" y2="0%">
-  <stop offset="0%" stop-color="#ff00ff"/>
+  <stop offset="0%" stop-color="#cc00ff"/>
   <stop offset="100%" stop-color="#6600ff"/>
   </linearGradient>
+  <linearGradient id="e" x1="0%" y1="100%" x2="0%" y2="0%" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#cc00ff" offset="0" />
+        <stop stop-color="#6600ff" offset="1" />
+    </linearGradient>
   </defs>
-  <line x1="100" y1="15" x2="100" y2="30" stroke="black" stroke-width="7"></line>
-  <ellipse cx="100" cy="50" rx="25" ry="25" fill="white" stroke="url(#linear)" stroke-width="5"></ellipse>
-  <circle cx="80" cy="40" r="20" fill="red" stroke="black" stroke-width="5"></circle>
-  <circle cx="120" cy="40" r="20" fill="red" stroke="black" stroke-width="5"></circle>
-  <ellipse cx="100" cy="120" rx="30" ry="45" fill="#eeffee" stroke="url(#linear)" stroke-width="5"></ellipse>
-  <ellipse cx="80" cy="110" rx="25" ry="40" fill="#00ffff55" stroke="black" stroke-width="5"></ellipse>
-  <ellipse cx="120" cy="110" rx="25" ry="40" fill="#00ffff55" stroke="black" stroke-width="5"></ellipse>
+
+  <circle cx="100" cy="50" r="20" fill="white" stroke="url(#linear)" stroke-width="5"></circle>
+  <circle cx="80" cy="45" r="10" fill="red" stroke="url(#linear)" stroke-width="5"></circle>
+  <circle cx="120" cy="45" r="10" fill="red" stroke="url(#linear)" stroke-width="5"></circle>
+
+  
+
+  <ellipse cx="100" cy="150" rx="35" ry="40" fill="white" stroke="url(#linear)" stroke-width="5"></ellipse>
+  <ellipse cx="100" cy="90" rx="25" ry="25" fill="white" stroke="url(#linear)" stroke-width="5"></ellipse>
+
+  <line x1="100" y1="115" x2="100" y2="65" stroke="url(#e)" stroke-width="5"/>
+  <line x1="90" y1="115" x2="90" y2="65" stroke="url(#e)" stroke-width="5"/>
+  <line x1="110" y1="115" x2="110" y2="65" stroke="url(#e)" stroke-width="5"/>
+
+    <line x1="75" y1="90" x2="40" y2="65" stroke="url(#e)" stroke-width="7"/>
+    <line x1="40" y1="67" x2="35" y2="30" stroke="url(#e)" stroke-width="7"/>
+
+    <line x1="75" y1="90" x2="10" y2="110" stroke="url(#e)" stroke-width="7"/>
+
+    <line x1="125" y1="90" x2="160" y2="65" stroke="url(#e)" stroke-width="7"/>
+    <line x1="160" y1="67" x2="165" y2="30" stroke="url(#e)" stroke-width="7"/>
+
+    <line x1="125" y1="90" x2="190" y2="110" stroke="url(#e)" stroke-width="7"/>
+
+  <ellipse cx="85" cy="185" rx="25" ry="60" fill="#00eeff55" stroke="url(#linear)" stroke-width="5" transform="rotate(-20 -30 0)""></ellipse>
+  <ellipse cx="108" cy="100" rx="25" ry="60" fill="#00eeff55" stroke="url(#linear)" stroke-width="5" transform="rotate( 25 0 0)"></ellipse>
 </svg>
  */
