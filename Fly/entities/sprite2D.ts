@@ -2,15 +2,25 @@ import { DrawableElementAttributes, Renderable } from "../rendering/types.js";
 import { Entity } from "./entity.js";
 import { Shapes } from "../rendering/shapes.js";
 export type Sprite2DOpt = {
-      image?: ImageBitmap;
-      displacementMap?: ImageBitmap;
-      bumpScale?: number;
-      vertices?: number[];
-      indices?: number[];
-      colors?: number[];
-      frames?: number;
-      costumes?: number;
+      image: ImageBitmap;
+      displacementMap: ImageBitmap;
+      bumpScale: number;
+      vertices: number[];
+      indices: number[];
+      colors: number[];
+      frames: number;
+      costumes: number;
+      scale: number;
 } 
+export type FramedAnimationDescription = {
+
+      from: number;
+      to: number;
+
+      costume: number;
+      deltaTime: number;
+      callback?: ()=>void;
+}
 
 export abstract class Sprite2D extends Entity {
 
@@ -51,14 +61,15 @@ export abstract class Sprite2D extends Entity {
       }
       
 
-      constructor( opt: Sprite2DOpt ){
+      constructor( opt: Partial<Sprite2DOpt> ){
             super();
             const descriptor: DrawableElementAttributes = this.getRenderableDescription( opt );
             this._renderable = this.game!.renderer.create( descriptor );
             this._renderable.attributes = { scale: { x: 1.5, y: 1, z: 1} };
             this.z = -1
       }
-      private getRenderableDescription( opt: Sprite2DOpt ){
+      private getRenderableDescription( opt: Partial<Sprite2DOpt> ){
+            const scale = opt.scale || 1;
             const descriptor: DrawableElementAttributes = {
                   vertices: []
             };
@@ -78,7 +89,7 @@ export abstract class Sprite2D extends Entity {
                               0, 0,
                         ],
                   };
-                  const rect = Shapes.rectangle( 0.15, 0.2 )
+                  const rect = Shapes.rectangle( 0.15*scale, 0.2*scale )
                   descriptor.indices = rect.indices;
                   descriptor.vertices = rect.vertices;
                   if( this.costumes > 1 || this.frames > 1 )
@@ -97,5 +108,39 @@ export abstract class Sprite2D extends Entity {
             descriptor.perspective = true;
             return descriptor;
       }
+      createAnimation( animations: FramedAnimationDescription[] ): ()=>void {
+            let nextFrameTime = animations[0].deltaTime;
+            let currFrame = animations[0].from;
+            let i = 0;
+
+            
+
+            this.costume = animations[0].costume;
+
+            const animation =  ()=>{
+                  const delta = this.game.loopController.timeFromStart;
+
+                  if( delta < nextFrameTime ) return;
+
+                  this.costume = animations[i].costume;
+                  this.frame = currFrame;
+
+                  nextFrameTime = delta + animations[i].deltaTime;
+                  currFrame ++;
+
+                  if( typeof animations[i].callback == 'function' )
+                        animations[i].callback!() 
       
+                  if( currFrame > animations[i].to || currFrame > this.frames ){
+                        i++;
+                        if( i <= animations.length - 1 )
+                              animation();
+                        else
+                              i = 0;
+                        currFrame = animations[i].from;
+                  }
+                  
+            }
+            return animation;
+      }
 }

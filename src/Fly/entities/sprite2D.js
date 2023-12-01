@@ -43,6 +43,7 @@ export class Sprite2D extends Entity {
         this.z = -1;
     }
     getRenderableDescription(opt) {
+        const scale = opt.scale || 1;
         const descriptor = {
             vertices: []
         };
@@ -62,7 +63,7 @@ export class Sprite2D extends Entity {
                     0, 0,
                 ],
             };
-            const rect = Shapes.rectangle(0.15, 0.2);
+            const rect = Shapes.rectangle(0.15 * scale, 0.2 * scale);
             descriptor.indices = rect.indices;
             descriptor.vertices = rect.vertices;
             if (this.costumes > 1 || this.frames > 1)
@@ -82,5 +83,31 @@ export class Sprite2D extends Entity {
         }
         descriptor.perspective = true;
         return descriptor;
+    }
+    createAnimation(animations) {
+        let nextFrameTime = animations[0].deltaTime;
+        let currFrame = animations[0].from;
+        let i = 0;
+        this.costume = animations[0].costume;
+        const animation = () => {
+            const delta = this.game.loopController.timeFromStart;
+            if (delta < nextFrameTime)
+                return;
+            this.costume = animations[i].costume;
+            this.frame = currFrame;
+            nextFrameTime = delta + animations[i].deltaTime;
+            currFrame++;
+            if (typeof animations[i].callback == 'function')
+                animations[i].callback();
+            if (currFrame > animations[i].to || currFrame > this.frames) {
+                i++;
+                if (i <= animations.length - 1)
+                    animation();
+                else
+                    i = 0;
+                currFrame = animations[i].from;
+            }
+        };
+        return animation;
     }
 }

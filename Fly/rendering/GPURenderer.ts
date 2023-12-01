@@ -36,7 +36,6 @@ type WebGPURenderFunctionData = {
 type UniformsSetterFunction = {
       [ T in UN ]: ()=>void;
 };
-
 export class WebGPURenderer extends WebGPU {
       protected objects: Map<string,WebGPURenderable> = new Map<string,WebGPURenderable>();
       protected renderPassDescriptor?: GPURenderPassDescriptor;

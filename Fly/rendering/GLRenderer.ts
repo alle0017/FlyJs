@@ -325,6 +325,8 @@ export class WebGLRenderer extends WebGL {
             return bonesArray;
       }
       private setUniformsArrays( obj: WebGLRenderable ){
+            //object that maps the setter functions, used to set the arrays,
+            // with the name of the uniform
             const setters = {
                   [UN.perspective]: ()=>{
                         const perspective = obj.uniforms.get(UN.perspective);
@@ -373,43 +375,55 @@ export class WebGLRenderer extends WebGL {
             }
       }
       private createRenderFunction( opt: WebGLRenderFunctionData ): RenderFunction {
+            // default render function executed always
             const attribSetter = ()=>{
                   for( let data of opt.attribs.values() ){
+                        //bind all the attributes buffer
                         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, data.buffer );
                         this.gl.vertexAttribPointer( 
                               data.location, 
                               data.components,
                               this.gl.FLOAT,
                               false, 0, 0 );
+                        //enable the buffer
                         this.gl.enableVertexAttribArray( data.location );
                   }
             }
+            // draw function always executed
             const draw = ()=>{
                   this.gl.bindBuffer( this.gl.ELEMENT_ARRAY_BUFFER, opt.indexBuffer );
                   this.gl.drawElements( opt.primitive, opt.N_OF_VERTICES, this.gl.UNSIGNED_SHORT, 0 );
             }
+            // check if any uniforms exists
             if( opt.uniforms.size <= 0 )
             return ()=>{
+                  //link the program
                   this.gl.useProgram( opt.program );
+                  //set the attributes buffers
                   attribSetter();
                   draw();
             }
             const uniformSetter = ()=>{
+                  //bind group for images
                   let bindGroup = 0;
                   for( let [ name, data ] of opt.uniforms.entries() ){
+                        //code executed only if the uniform is a texture
                         const texture = opt.textures.get( name );
                         if( texture ){
+                              //set the image at currently available bind group
                               this.gl.uniform1i( data.location, bindGroup );
+                              //bind the texture
                               this.gl.activeTexture( this.gl[ `TEXTURE${bindGroup}` as TextureAttributeName ] );
                               this.gl.bindTexture(this.gl.TEXTURE_2D, texture );
                               bindGroup++;
+                              //31 is the maximum binding size
                               if( bindGroup > 31 ){
                                     console.error( 'to many images were passed' );
                               }
                               continue;
                         }
+                        //else set the uniform array
                         this.setUniforms( data );
-                        
                   }
             }
             return ()=>{
@@ -428,7 +442,9 @@ export class WebGLRenderer extends WebGL {
             return z;
       }
       create( opt: DrawableElementAttributes ): WebGLRenderable {
+            // get the program attributes based on the attributes passed
             const programInfos = this.setProgramAttributes( opt );
+            //initialize the uniform arrays and get the skeleton object
             const skeleton = this.initArrays( programInfos.uniforms, opt );
             return {
                   function: this.createRenderFunction( programInfos ),
@@ -509,7 +525,9 @@ export class WebGLRenderer extends WebGL {
             return [ ...others, ...sorted ];
       }
       draw(): void {
+            //sort the objects for transparency
             const sortedObj = this.sortTransparent();
+            // draw each object
             for( let el of sortedObj ){
                   (el.function as ( arg0: DrawOpt )=>void)( el.attributes );
             }

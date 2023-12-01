@@ -78,19 +78,62 @@ const indices = [
 ];
 game.assets.images.img = await Load.image('./otherStuff/prova.png');
 class mySprite extends FlySprite2D {
-    constructor() {
+    constructor(isNPC = false) {
         super({
             image: game.assets.images.img,
             frames: 4,
             costumes: 4,
+            scale: 2
         });
-        this.time = 100;
-        this.nextFrameTime = 60;
-        this.currCostume = 0;
-        this.doAnimation = false;
+        this.isNPC = isNPC;
+        this.walk = {};
+        this.walk.down = this.createAnimation([{
+                from: 0,
+                to: 4,
+                costume: 0,
+                deltaTime: 60,
+                callback: () => this.y -= 0.05
+            }]);
+        this.walk.up = this.createAnimation([{
+                from: 0,
+                to: 4,
+                costume: 3,
+                deltaTime: 60,
+                callback: () => this.y += 0.05
+            }]);
+        this.walk.left = this.createAnimation([{
+                from: 0,
+                to: 4,
+                costume: 1,
+                deltaTime: 60,
+                callback: () => this.x -= 0.05
+            }]);
+        this.walk.right = this.createAnimation([{
+                from: 0,
+                to: 4,
+                costume: 2,
+                deltaTime: 60,
+                callback: () => this.x += 0.05
+            }]);
+        if (isNPC) {
+            this.walk.path = this.createAnimation([{
+                    from: 0,
+                    to: 4,
+                    costume: 2,
+                    deltaTime: 60,
+                    callback: () => this.x += 0.05
+                }, {
+                    from: 0,
+                    to: 4,
+                    costume: 1,
+                    deltaTime: 60,
+                    callback: () => this.x -= 0.05
+                }]);
+        }
     }
     onDraw() {
-        this.animate(this.game.loopController.timeFromStart);
+        if (this.isNPC)
+            this.walk.path();
     }
     onDismiss() {
         throw new Error('Method not implemented.');
@@ -98,17 +141,6 @@ class mySprite extends FlySprite2D {
     onEnter() {
         bug();
         this.costume = 3;
-    }
-    animate(delta) {
-        if (!this.doAnimation || delta < this.nextFrameTime)
-            return;
-        this.nextFrameTime = delta + this.time;
-        this.frame = this.currCostume;
-        this.currCostume++;
-        if (this.currCostume >= this.costumes) {
-            this.currCostume = 0;
-            this.doAnimation = false;
-        }
     }
 }
 class FirstScene extends FlyScene {
@@ -120,7 +152,7 @@ class FirstScene extends FlyScene {
         //setup debug camera
         this.$debug.globalCamera();
         const sprite = new mySprite();
-        const sprite2 = new mySprite();
+        const sprite2 = new mySprite(true);
         sprite2.x = 0;
         sprite2.z = -2.5;
         sprite.z = -3;
@@ -131,30 +163,20 @@ class FirstScene extends FlyScene {
         this.attach(sprite2);
         this.attach(sprite);
         this.$events.onArrowLeftPressed(() => {
-            sprite.x -= 0.05;
-            sprite.costume = 1;
-            sprite.doAnimation = true;
+            sprite.walk.left();
         });
         this.$events.onArrowRightPressed(() => {
-            sprite.x += 0.05;
-            sprite.costume = 2;
-            sprite.doAnimation = true;
+            sprite.walk.right();
         });
         this.$events.onArrowUpPressed(() => {
-            sprite.y += 0.05;
-            sprite.costume = 3;
-            sprite.doAnimation = true;
+            sprite.walk.up();
         });
         this.$events.onArrowDownPressed(() => {
-            sprite.y -= 0.05;
-            sprite.costume = 0;
-            sprite.doAnimation = true;
+            sprite.walk.down();
         });
         this.$events.onKeyRelease(() => {
-            sprite.doAnimation = false;
             sprite.frame = 0;
         });
-        //this.execute( this.update );
     }
     onDestroyed(game) { }
 }

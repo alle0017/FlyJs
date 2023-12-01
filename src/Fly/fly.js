@@ -10,7 +10,6 @@ import { Matrix as matrix } from "./rendering/matrix/matrices.js";
 import * as types from './rendering/types.js';
 import { Shapes as shapes } from "./rendering/shapes.js";
 export const game = await GameController.get();
-export const Game = GameController;
 export const $renderer = game.renderer;
 export const $assets = game.assets;
 export const $debug = game.debug;
