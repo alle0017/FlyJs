@@ -31,7 +31,7 @@ export class ViewDelegate {
     constructor(_resolution) {
         this._resolution = _resolution;
         this._near = 0.1;
-        this._far = 50;
+        this._far = 1001;
         this._fieldOfView = 60;
         this.perspectiveMatrix = [];
         // Update the perspective matrix based on initial camera properties
@@ -84,8 +84,9 @@ export class ViewDelegate {
         if (rotation)
             transformationMatrix = Matrix.composeMatrix(transformationMatrix, 4, rotation);
         // If a camera is provided, combine with the transformation matrix
-        if (opt.camera)
+        if (opt.camera) {
             transformationMatrix = Matrix.composeMatrix(opt.camera.matrix, 4, transformationMatrix);
+        }
         return transformationMatrix;
     }
     calculateSkeletonPosition(bones, angles, translations) {

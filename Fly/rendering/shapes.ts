@@ -247,4 +247,54 @@ export namespace Shapes {
                   vertices
             }
       }
+      function dist( arr: number[], start: number ) {
+            return ( arr[ start ]**2 + arr[ start + 1 ]**2 + arr[ start + 2 ]**2 ) ** 0.5
+      }
+      export function getExtremes( vertices: number[] ): {
+            max: Point3D,
+            min: Point3D
+      } {
+            if( vertices.length < 3 ){
+                  return {
+                        max: {
+                              x: 0,
+                              y: 0,
+                              z: 0,
+                        },
+                        min: {
+                              x: 0,
+                              y: 0,
+                              z: 0,
+                        }
+                  }
+            }
+            let maxDist = dist( vertices, 0 );
+            let minDist = maxDist;
+            let max = 0;
+            let min = 0;
+             
+            for( let i = 3; i < vertices.length; i+=3 ){
+                  const tmp = dist( vertices, i );
+                  if( tmp < minDist ){
+                        minDist = tmp;
+                        min = i;
+                  } else if( tmp > maxDist ){
+                        maxDist = tmp;
+                        max = i;
+                  }
+            }
+
+            return {
+                  max: {
+                        x: vertices[max],
+                        y: vertices[max + 1],
+                        z: vertices[max + 2],
+                  },
+                  min: {
+                        x: vertices[min],
+                        y: vertices[min + 1],
+                        z: vertices[min + 2],
+                  },
+            }
+      }
 }

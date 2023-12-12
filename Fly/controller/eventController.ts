@@ -46,6 +46,7 @@ export namespace EventEmitter {
             on( ARROWS.DOWN , handler );
       }
       export function onArrowLeftPressed( handler: EventHandler ){
+            console.time('event')
             on( ARROWS.LEFT , handler );
       }
       export function onArrowRightPressed( handler: EventHandler ){

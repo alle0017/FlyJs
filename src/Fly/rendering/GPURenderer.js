@@ -4,8 +4,24 @@ import { ViewDelegate } from "./matrix/viewMatrix.js";
 import { UniformsName as UN, BindingsName as BN } from './shaders/shaderModel.js';
 import { UNIFORM } from "./shaders/GPUShader.js";
 import { ProgramMode, BufferDataType, BufferUsage, Primitives, RendererErrorType } from './types.js';
+import { Shapes } from './shapes.js';
 import { Matrix } from "./matrix/matrices.js";
 export class WebGPURenderer extends WebGPU {
+    get perspectiveCoords() {
+        return {
+            fieldOfView: this.view.fieldOfView,
+            near: this.view.zNear,
+            far: this.view.zFar,
+        };
+    }
+    set perspectiveCoords(opt) {
+        if (opt.far)
+            this.view.zFar = opt.far;
+        if (opt.near)
+            this.view.zNear = opt.near;
+        if (opt.fieldOfView)
+            this.view.fieldOfView = opt.fieldOfView;
+    }
     constructor(cvs) {
         super(cvs);
         this.objects = new Map();
@@ -335,7 +351,8 @@ export class WebGPURenderer extends WebGPU {
             //whether an object contains alpha channel or not
             transparent: opt.imageData ? true : false,
             //used to sort the rendering array before rendering
-            z: this.getMinZ(opt.vertices)
+            z: this.getMinZ(opt.vertices),
+            extremes: Shapes.getExtremes(opt.vertices),
         };
     }
     /**
@@ -450,6 +467,52 @@ export class WebGPURenderer extends WebGPU {
         // return the objects
         return [...others, ...sorted];
     }
+    getTranslation(el) {
+        const point = {
+            x: 0,
+            y: 0,
+            z: 0
+        };
+        if (el.attributes.translationMatrix) {
+            point.x += el.attributes.translationMatrix[12];
+            point.y += el.attributes.translationMatrix[13];
+            point.z += el.attributes.translationMatrix[14];
+        }
+        if (el.attributes.camera) {
+            point.x -= el.attributes.camera.x;
+            point.y -= el.attributes.camera.y;
+            point.z -= el.attributes.camera.z;
+        }
+        return point;
+    }
+    isOnScreen(el) {
+        const translation = this.getTranslation(el);
+        const max = {
+            x: el.extremes.max.x + translation.x,
+            y: el.extremes.max.y + translation.y,
+            z: el.extremes.max.z + translation.z,
+        };
+        const min = {
+            x: el.extremes.min.x + translation.x,
+            y: el.extremes.min.y + translation.y,
+            z: el.extremes.min.z + translation.z,
+        };
+        const pointOnScreen = (point) => {
+            return (point.x > -1 &&
+                point.y > -1 &&
+                point.y < 1 &&
+                point.x < 1 &&
+                point.z < this.view.zNear &&
+                point.z > -(this.view.zFar - 1));
+        };
+        return ((pointOnScreen(max) &&
+            pointOnScreen(min)) ||
+            pointOnScreen({
+                x: (max.x + min.x) / 2,
+                y: (max.y + min.y) / 2,
+                z: (max.z + min.z) / 2
+            }));
+    }
     draw() {
         var _a, _b;
         //first, sort the objects for transparency
@@ -467,9 +530,11 @@ export class WebGPURenderer extends WebGPU {
         //start writing the command buffer
         const pass = encoder.beginRenderPass(this.renderPassDescriptor);
         //loop over the different objects
-        for (let el of objects)
-            //run the render function
-            el.function(pass);
+        for (let el of objects) {
+            if (this.isOnScreen(el))
+                //run the render function
+                el.function(pass);
+        }
         //end the writing of the command buffer
         pass.end();
         //draw

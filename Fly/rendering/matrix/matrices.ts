@@ -79,14 +79,15 @@ export namespace Matrix {
       */
       export function perspective(fieldOfView: number, resolution: number, near: number, far: number, toRad: boolean = true) {
             if(toRad) fieldOfView = degToRad(fieldOfView);
-            const f = Math.tan(Math.PI * 0.5 - 0.5 * fieldOfView);
-            const rangeInv = 1.0 / (near - far);
+            //const f = Math.tan(Math.PI * 0.5 - 0.5 * fieldOfView);
+            const f = 1/Math.tan( fieldOfView/2*Math.PI/180 )
+            const rangeInv = 1.0 / (far-near);
          
             return [
               f / resolution, 0, 0, 0,
               0, f, 0, 0,
-              0, 0, (near + far) * rangeInv, -1,
-              0, 0, near * far * rangeInv * 2, 0
+              0, 0, -(near + far) * rangeInv, -1,
+              0, 0, -near * far * rangeInv * 2, 0
             ];
       }
       export const IDENTITY_4X4 = [

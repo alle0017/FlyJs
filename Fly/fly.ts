@@ -12,6 +12,8 @@ import { Matrix as matrix } from "./rendering/matrix/matrices.js";
 import * as types from './rendering/types.js'
 import { Shapes as shapes } from "./rendering/shapes.js";
 
+import { Collisions } from "./physics/collisions.js";
+
 export const game = await GameController.get();
 export type FlyGame = GameController;
 
@@ -31,6 +33,7 @@ export const Load = load;
 export const Types = types;
 export const Scene = scene;
 export const Shapes = shapes;
+export const FlyCollisions = Collisions;
 
 export const FlyScene = CustomScene;
 export const bug = ( obj?: unknown ) =>{

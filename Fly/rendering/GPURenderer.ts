@@ -17,9 +17,13 @@ import {
       RenderableArrays,
       Skeleton,
       Bone,
-      SkeletalAnimationOptions
+      SkeletalAnimationOptions,
+      Point3D,
+      PerspectiveOpt
  } from './types.js';
+import { Shapes } from './shapes.js'; 
 import { Matrix } from "./matrix/matrices.js";
+import { Camera } from './matrix/camera.js';
 
 type UniformInformation = { 
       buffer: GPUBuffer | undefined, 
@@ -37,11 +41,29 @@ type UniformsSetterFunction = {
       [ T in UN ]: ()=>void;
 };
 export class WebGPURenderer extends WebGPU {
+
       protected objects: Map<string,WebGPURenderable> = new Map<string,WebGPURenderable>();
       protected renderPassDescriptor?: GPURenderPassDescriptor;
+      
       private view: ViewDelegate;
 
       private transparency: boolean = false;
+
+      get perspectiveCoords(): PerspectiveOpt {
+            return {
+                  fieldOfView: this.view.fieldOfView,
+                  near: this.view.zNear,
+                  far: this.view.zFar,
+            }
+      }
+      set perspectiveCoords( opt: Partial<PerspectiveOpt> ){
+            if( opt.far )
+                  this.view.zFar = opt.far;
+            if( opt.near )
+                  this.view.zNear = opt.near;
+            if( opt.fieldOfView )
+                  this.view.fieldOfView = opt.fieldOfView;
+      }
 
       constructor( cvs: HTMLCanvasElement ){
             super( cvs );
@@ -49,7 +71,7 @@ export class WebGPURenderer extends WebGPU {
       }
 
       override async init(): Promise<this> {
-            await super.init();
+            await super.init(); 
             this.renderPassDescriptor = this.createRenderPassDescriptor( true );
             return this;
       }
@@ -392,7 +414,8 @@ export class WebGPURenderer extends WebGPU {
                   //whether an object contains alpha channel or not
                   transparent: opt.imageData? true: false,
                   //used to sort the rendering array before rendering
-                  z: this.getMinZ( opt.vertices )
+                  z: this.getMinZ( opt.vertices ),
+                  extremes: Shapes.getExtremes( opt.vertices ),
             }
       }
       /**
@@ -512,6 +535,56 @@ export class WebGPURenderer extends WebGPU {
             // return the objects
             return [ ...others, ...sorted ];
       }
+      private getTranslation( el: WebGPURenderable ){
+            const point = {
+                  x: 0,
+                  y: 0,
+                  z: 0
+            }
+            if( el.attributes.translationMatrix ){
+                  point.x += el.attributes.translationMatrix[12]
+                  point.y += el.attributes.translationMatrix[13]
+                  point.z += el.attributes.translationMatrix[14]
+            }
+            if( el.attributes.camera ){
+                  point.x -= el.attributes.camera.x;
+                  point.y -= el.attributes.camera.y;
+                  point.z -= el.attributes.camera.z;
+            }
+            return point;
+      }
+      private isOnScreen( el: WebGPURenderable ): boolean {
+            const translation = this.getTranslation(el);
+            const max = {
+                  x: el.extremes.max.x + translation.x,
+                  y: el.extremes.max.y + translation.y,
+                  z: el.extremes.max.z + translation.z,
+            }
+            const min = {
+                  x: el.extremes.min.x + translation.x,
+                  y: el.extremes.min.y + translation.y,
+                  z: el.extremes.min.z + translation.z,
+            }
+            const pointOnScreen = ( point: Point3D)=>{
+                  return ( 
+                        point.x > -1 &&
+                        point.y > -1 &&
+                        point.y < 1 &&
+                        point.x < 1 &&
+                        point.z < this.view.zNear &&
+                        point.z > -(this.view.zFar - 1)
+                  )
+            }
+            return (
+                  (     pointOnScreen(max) && 
+                        pointOnScreen(min) ) || 
+                  pointOnScreen({
+                        x: (max.x + min.x )/ 2,
+                        y: (max.y + min.y)/2,
+                        z: (max.z + min.z)/2
+                  }) 
+            );
+      }
       draw(): void {
             //first, sort the objects for transparency
             const objects = this.sortTransparent();
@@ -529,9 +602,11 @@ export class WebGPURenderer extends WebGPU {
             //start writing the command buffer
             const pass = encoder.beginRenderPass( this.renderPassDescriptor );
             //loop over the different objects
-            for( let el of objects )
-                  //run the render function
-                  el.function( pass )
+            for( let el of objects ){
+                        if( this.isOnScreen( el ) )
+                        //run the render function
+                        el.function( pass )
+            }
             //end the writing of the command buffer
             pass.end()
             //draw

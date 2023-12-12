@@ -198,7 +198,11 @@ export type WebGPURenderable = {
             transformations: GPUBuffer | undefined
       },
       z: number,
-      transparent: boolean
+      transparent: boolean,
+      extremes: {
+            max: Point3D,
+            min: Point3D,
+      }
 }
 export type WebGLRenderable = {
       function: (arg0: any) => void,
@@ -206,7 +210,11 @@ export type WebGLRenderable = {
       uniforms: Map<string, UniformsInfo>,
       attributes: DrawOpt,
       z: number,
-      transparent: boolean
+      transparent: boolean,
+      extremes: {
+            max: Point3D,
+            min: Point3D,
+      }
 }
 export type Renderable = WebGPURenderable | WebGLRenderable;
 export type RenderableArrays = {
@@ -225,4 +233,13 @@ export type Skeleton = {
       indices: number[],
       // root node of the skeleton
       root: number
+}
+
+export type PerspectiveOpt = {
+      near: number,
+      far: number,
+      fieldOfView: number
+}
+export interface Macros {
+      get_max_min( arr: Int32Array ): [number, number];
 }

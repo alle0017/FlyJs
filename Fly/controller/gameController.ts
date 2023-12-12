@@ -1,6 +1,6 @@
 import { WebGLRenderer } from '../rendering/GLRenderer.js'
 import { WebGPURenderer } from '../rendering/GPURenderer.js';
-import { DrawableElementAttributes, DrawOpt, Color, Renderable } from '../rendering/types.js';
+import { DrawableElementAttributes, DrawOpt, Color, Renderable, PerspectiveOpt, Point3D } from '../rendering/types.js';
 import { Debug } from './debug.js';
 import { LoopController, } from './loopController.js';
 import { Scene } from './scene.js';
@@ -25,6 +25,8 @@ export type References = {
 interface Renderer {
       clearColor: Color;
       culling: boolean;
+      set perspectiveCoords(opt: Partial<PerspectiveOpt>);
+      get perspectiveCoords(): PerspectiveOpt;
       init(): Promise<Renderer>;
       create( opt: DrawableElementAttributes ): Renderable;
       append( name: string, obj: Renderable ): Renderer;
@@ -36,6 +38,7 @@ interface Renderer {
 }
 export class GameController {
       private static game: GameController;
+
       readonly loopController: LoopController;
       readonly renderer: Renderer;
       readonly debug: Debug;
@@ -47,7 +50,9 @@ export class GameController {
       };
       readonly refs: References = {};
       readonly cvs: HTMLCanvasElement;
+
       private _scene?: Scene;
+
       get scene(): Scene | undefined {
             return this._scene;
       }
@@ -104,6 +109,7 @@ export class GameController {
       }
       private setEvents(){
             window.addEventListener('keydown', (e)=> this.events.fire(e.key, { game: this } ) );
+            window.addEventListener('keypress', (e)=> this.events.fire( e.key, { game: this }) )
             window.addEventListener('keyup', (e)=> this.events.fire( this.events.KEY_UP, { game: this } ) );
       }
       useScene( scene: new (...args: any)=>CustomScene ): void;

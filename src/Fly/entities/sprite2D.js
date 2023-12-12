@@ -39,7 +39,7 @@ export class Sprite2D extends Entity {
         this.animationVector = [0, 0];
         const descriptor = this.getRenderableDescription(opt);
         this._renderable = this.game.renderer.create(descriptor);
-        this._renderable.attributes = { scale: { x: 1.5, y: 1, z: 1 } };
+        this._renderable.attributes = { scale: { x: 1, y: 1, z: 1 } };
         this.z = -1;
     }
     getRenderableDescription(opt) {
@@ -88,6 +88,7 @@ export class Sprite2D extends Entity {
         let nextFrameTime = animations[0].deltaTime;
         let currFrame = animations[0].from;
         let i = 0;
+        let times = animations[i].for || 0;
         this.costume = animations[0].costume;
         const animation = () => {
             const delta = this.game.loopController.timeFromStart;
@@ -100,11 +101,18 @@ export class Sprite2D extends Entity {
             if (typeof animations[i].callback == 'function')
                 animations[i].callback();
             if (currFrame > animations[i].to || currFrame > this.frames) {
+                if (times) {
+                    times--;
+                    currFrame = animations[i].from;
+                    animation();
+                    return;
+                }
                 i++;
                 if (i <= animations.length - 1)
                     animation();
                 else
                     i = 0;
+                times = animations[i].for || 0;
                 currFrame = animations[i].from;
             }
         };

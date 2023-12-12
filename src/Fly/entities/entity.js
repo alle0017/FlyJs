@@ -9,6 +9,10 @@ class Entity {
         if (this._x === x)
             return;
         this._x = x;
+        if (this.camera) {
+            this.camera.x = x;
+            this.setCameraToAll();
+        }
         const matrix = Matrix.translate({ x: this._x, y: this._y, z: this._z });
         if (this.appended) {
             (_a = this.game) === null || _a === void 0 ? void 0 : _a.renderer.setAttributes(this._id, { translationMatrix: matrix });
@@ -25,6 +29,10 @@ class Entity {
         if (this._y === y)
             return;
         this._y = y;
+        if (this.camera) {
+            this.camera.y = y;
+            this.setCameraToAll();
+        }
         const matrix = Matrix.translate({ x: this._x, y: this._y, z: this._z });
         if (this.appended) {
             (_a = this.game) === null || _a === void 0 ? void 0 : _a.renderer.setAttributes(this._id, { translationMatrix: matrix });
@@ -41,6 +49,10 @@ class Entity {
         if (this._z === z)
             return;
         this._z = z;
+        if (this.camera) {
+            this.camera.z = z;
+            this.setCameraToAll();
+        }
         const matrix = Matrix.translate({ x: this._x, y: this._y, z: this._z });
         if (this.appended) {
             (_a = this.game) === null || _a === void 0 ? void 0 : _a.renderer.setAttributes(this._id, { translationMatrix: matrix });
@@ -49,6 +61,10 @@ class Entity {
             this._renderable.attributes.translationMatrix = matrix;
         }
     }
+    get position() {
+        return { x: this._x, y: this._y, z: this._z };
+    }
+    set position(position) { }
     get id() {
         return this._id;
     }
@@ -73,6 +89,11 @@ class Entity {
         this._id = Entity.COMMON_ID + Entity.UNIQUE_ID;
         Entity.UNIQUE_ID++;
         this.game = game;
+    }
+    setCameraToAll() {
+        if (!this.appended)
+            return;
+        this.game.renderer.setToAll({ camera: this.camera });
     }
 }
 Entity.UNIQUE_ID = 0;

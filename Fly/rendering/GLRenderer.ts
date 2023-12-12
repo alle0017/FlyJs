@@ -15,12 +15,15 @@ import {
       BufferUsage,
       BufferDataType,
       AttribsInfo,
-      UniformsInfo
+      UniformsInfo,
+      PerspectiveOpt,
+      Point3D,
  } from './types.js';
 import { ProgramSetterDelegate, } from "./programSetterDelegate.js";
 import { UniformsName as UN, BindingsName as BN } from './shaders/shaderModel.js';
 import { ViewDelegate } from './matrix/viewMatrix.js';
 import { Matrix } from './matrix/matrices.js';
+import { Shapes } from './shapes.js';
 
 type UniformsData = {
       [ T in UN ]: number[] | number; 
@@ -40,6 +43,7 @@ type AcceptedNumbers =
 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 
 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31
 type TextureAttributeName = `TEXTURE${AcceptedNumbers}`;
+
 export class WebGLRenderer extends WebGL { 
 
       protected objects: Map<string,WebGLRenderable> = new Map<string,WebGLRenderable>();
@@ -77,10 +81,26 @@ export class WebGLRenderer extends WebGL {
             this._clearColor = value;
             this.gl.clearColor( value.r, value.g, value.b, value.a );
       }
+      get perspectiveCoords(): PerspectiveOpt {
+            return {
+                  fieldOfView: this.view.fieldOfView,
+                  near: this.view.zNear,
+                  far: this.view.zFar,
+            }
+      }
+      set perspectiveCoords( opt: Partial<PerspectiveOpt> ){
+            if( opt.far )
+                  this.view.zFar = opt.far;
+            if( opt.near )
+                  this.view.zNear = opt.near;
+            if( opt.fieldOfView )
+                  this.view.fieldOfView = opt.fieldOfView;
+      }
 
-      constructor( cvs: HTMLCanvasElement ){
+      constructor( private cvs: HTMLCanvasElement ){
             super( cvs );
             this.view = new ViewDelegate( cvs.width/cvs.height );
+            
       }
       async init(): Promise<this> {
             this.gl.enable( this.gl.DEPTH_TEST );
@@ -452,8 +472,8 @@ export class WebGLRenderer extends WebGL {
                   uniforms: programInfos.uniforms,
                   attributes: {},
                   transparent: opt.imageData? true: false,
-                  z: this.getMinZ( opt.vertices )
-
+                  z: this.getMinZ( opt.vertices ),
+                  extremes: Shapes.getExtremes( opt.vertices ),
             }
       }
       append( name: string, obj: WebGLRenderable ): this {
@@ -485,6 +505,7 @@ export class WebGLRenderer extends WebGL {
                   console.warn(`object ${name} does not exist`);
                   return this;
             }
+
             obj.attributes  = {
                   ...obj.attributes,
                   ...opt
@@ -524,11 +545,62 @@ export class WebGLRenderer extends WebGL {
             }
             return [ ...others, ...sorted ];
       }
+      private getTranslation( el: WebGLRenderable ){
+            const point = {
+                  x: 0,
+                  y: 0,
+                  z: 0
+            }
+            if( el.attributes.translationMatrix ){
+                  point.x += el.attributes.translationMatrix[12]
+                  point.y += el.attributes.translationMatrix[13]
+                  point.z += el.attributes.translationMatrix[14]
+            }
+            if( el.attributes.camera ){
+                  point.x -= el.attributes.camera.x;
+                  point.y -= el.attributes.camera.y;
+                  point.z -= el.attributes.camera.z;
+            }
+            return point;
+      }
+      private isOnScreen( el: WebGLRenderable ): boolean {
+            const translation = this.getTranslation(el);
+            const max = {
+                  x: el.extremes.max.x + translation.x,
+                  y: el.extremes.max.y + translation.y,
+                  z: el.extremes.max.z + translation.z,
+            }
+            const min = {
+                  x: el.extremes.min.x + translation.x,
+                  y: el.extremes.min.y + translation.y,
+                  z: el.extremes.min.z + translation.z,
+            }
+            const pointOnScreen = ( point: Point3D)=>{
+                  return ( 
+                        point.x > -1 &&
+                        point.y > -1 &&
+                        point.y < 1 &&
+                        point.x < 1 &&
+                        point.z < this.view.zNear &&
+                        point.z > -(this.view.zFar - 1)
+                  )
+            }
+            return (
+                  (     pointOnScreen(max) && 
+                        pointOnScreen(min) ) || 
+                  pointOnScreen({
+                        x: (max.x + min.x )/ 2,
+                        y: (max.y + min.y)/2,
+                        z: (max.z + min.z)/2
+                  }) 
+            );
+      }
       draw(): void {
             //sort the objects for transparency
             const sortedObj = this.sortTransparent();
             // draw each object
             for( let el of sortedObj ){
+                  if( this.isOnScreen( el ) )
                   (el.function as ( arg0: DrawOpt )=>void)( el.attributes );
             }
       }

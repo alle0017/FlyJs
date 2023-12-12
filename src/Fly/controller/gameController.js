@@ -59,6 +59,7 @@ export class GameController {
     }
     setEvents() {
         window.addEventListener('keydown', (e) => this.events.fire(e.key, { game: this }));
+        window.addEventListener('keypress', (e) => this.events.fire(e.key, { game: this }));
         window.addEventListener('keyup', (e) => this.events.fire(this.events.KEY_UP, { game: this }));
     }
     useScene(arg0) {

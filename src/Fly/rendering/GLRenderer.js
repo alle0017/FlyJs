@@ -1,9 +1,10 @@
 import { WebGL } from './codeDelegates/GLcode.js';
-import { ProgramMode, Primitives, RendererErrorType, BufferUsage, BufferDataType } from './types.js';
+import { ProgramMode, Primitives, RendererErrorType, BufferUsage, BufferDataType, } from './types.js';
 import { ProgramSetterDelegate, } from "./programSetterDelegate.js";
 import { UniformsName as UN, BindingsName as BN } from './shaders/shaderModel.js';
 import { ViewDelegate } from './matrix/viewMatrix.js';
 import { Matrix } from './matrix/matrices.js';
+import { Shapes } from './shapes.js';
 export class WebGLRenderer extends WebGL {
     get culling() {
         return this._culling;
@@ -31,8 +32,24 @@ export class WebGLRenderer extends WebGL {
         this._clearColor = value;
         this.gl.clearColor(value.r, value.g, value.b, value.a);
     }
+    get perspectiveCoords() {
+        return {
+            fieldOfView: this.view.fieldOfView,
+            near: this.view.zNear,
+            far: this.view.zFar,
+        };
+    }
+    set perspectiveCoords(opt) {
+        if (opt.far)
+            this.view.zFar = opt.far;
+        if (opt.near)
+            this.view.zNear = opt.near;
+        if (opt.fieldOfView)
+            this.view.fieldOfView = opt.fieldOfView;
+    }
     constructor(cvs) {
         super(cvs);
+        this.cvs = cvs;
         this.objects = new Map();
         this._clearColor = { r: 0, g: 0, b: 0, a: 1 };
         this._culling = false;
@@ -388,7 +405,8 @@ export class WebGLRenderer extends WebGL {
             uniforms: programInfos.uniforms,
             attributes: {},
             transparent: opt.imageData ? true : false,
-            z: this.getMinZ(opt.vertices)
+            z: this.getMinZ(opt.vertices),
+            extremes: Shapes.getExtremes(opt.vertices),
         };
     }
     append(name, obj) {
@@ -456,12 +474,59 @@ export class WebGLRenderer extends WebGL {
         }
         return [...others, ...sorted];
     }
+    getTranslation(el) {
+        const point = {
+            x: 0,
+            y: 0,
+            z: 0
+        };
+        if (el.attributes.translationMatrix) {
+            point.x += el.attributes.translationMatrix[12];
+            point.y += el.attributes.translationMatrix[13];
+            point.z += el.attributes.translationMatrix[14];
+        }
+        if (el.attributes.camera) {
+            point.x -= el.attributes.camera.x;
+            point.y -= el.attributes.camera.y;
+            point.z -= el.attributes.camera.z;
+        }
+        return point;
+    }
+    isOnScreen(el) {
+        const translation = this.getTranslation(el);
+        const max = {
+            x: el.extremes.max.x + translation.x,
+            y: el.extremes.max.y + translation.y,
+            z: el.extremes.max.z + translation.z,
+        };
+        const min = {
+            x: el.extremes.min.x + translation.x,
+            y: el.extremes.min.y + translation.y,
+            z: el.extremes.min.z + translation.z,
+        };
+        const pointOnScreen = (point) => {
+            return (point.x > -1 &&
+                point.y > -1 &&
+                point.y < 1 &&
+                point.x < 1 &&
+                point.z < this.view.zNear &&
+                point.z > -(this.view.zFar - 1));
+        };
+        return ((pointOnScreen(max) &&
+            pointOnScreen(min)) ||
+            pointOnScreen({
+                x: (max.x + min.x) / 2,
+                y: (max.y + min.y) / 2,
+                z: (max.z + min.z) / 2
+            }));
+    }
     draw() {
         //sort the objects for transparency
         const sortedObj = this.sortTransparent();
         // draw each object
         for (let el of sortedObj) {
-            el.function(el.attributes);
+            if (this.isOnScreen(el))
+                el.function(el.attributes);
         }
     }
 }

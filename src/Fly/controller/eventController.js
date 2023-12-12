@@ -51,6 +51,7 @@ export var EventEmitter;
     }
     EventEmitter.onArrowDownPressed = onArrowDownPressed;
     function onArrowLeftPressed(handler) {
+        console.time('event');
         on(ARROWS.LEFT, handler);
     }
     EventEmitter.onArrowLeftPressed = onArrowLeftPressed;

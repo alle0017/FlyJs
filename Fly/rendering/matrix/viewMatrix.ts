@@ -17,7 +17,7 @@ type Skeleton = {
 export class ViewDelegate {
 
       private _near: number = 0.1;         
-      private _far: number = 50;               
+      private _far: number = 1001;               
       private _fieldOfView: number = 60;  
 
 
@@ -114,10 +114,11 @@ export class ViewDelegate {
             const rotation = this.selectRotationMatrix(opt);
             if (rotation)
             transformationMatrix = Matrix.composeMatrix(transformationMatrix, 4, rotation);
-      
+
             // If a camera is provided, combine with the transformation matrix
-            if (opt.camera)
-            transformationMatrix = Matrix.composeMatrix(opt.camera.matrix, 4, transformationMatrix);
+            if (opt.camera){
+                  transformationMatrix = Matrix.composeMatrix(opt.camera.matrix, 4, transformationMatrix);
+            }
       
             return transformationMatrix;
       }  

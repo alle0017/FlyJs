@@ -1,4 +1,4 @@
-import { FlyScene, game, FlySprite2D, Load, bug, Shapes } from './Fly/fly.js';
+import { FlyScene, game, FlySprite2D, Load, Shapes, FlyCollisions, } from './Fly/fly.js';
 const color = [
     1.0, 0.0, 0.0, 1.0,
     1.0, 1.0, 0.0, 1.0,
@@ -83,63 +83,82 @@ class mySprite extends FlySprite2D {
             image: game.assets.images.img,
             frames: 4,
             costumes: 4,
-            scale: 2
+            scale: 1
         });
         this.isNPC = isNPC;
         this.walk = {};
+        this.z = -30.1;
         this.walk.down = this.createAnimation([{
                 from: 0,
                 to: 4,
                 costume: 0,
                 deltaTime: 60,
-                callback: () => this.y -= 0.05
+                callback: () => this.y -= 0.1
             }]);
         this.walk.up = this.createAnimation([{
                 from: 0,
                 to: 4,
                 costume: 3,
                 deltaTime: 60,
-                callback: () => this.y += 0.05
+                callback: () => this.y += 0.1
             }]);
         this.walk.left = this.createAnimation([{
                 from: 0,
                 to: 4,
                 costume: 1,
                 deltaTime: 60,
-                callback: () => this.x -= 0.05
+                callback: () => this.x -= 0.1
             }]);
         this.walk.right = this.createAnimation([{
                 from: 0,
                 to: 4,
                 costume: 2,
                 deltaTime: 60,
-                callback: () => this.x += 0.05
+                callback: () => this.x += 0.1
             }]);
         if (isNPC) {
             this.walk.path = this.createAnimation([{
                     from: 0,
                     to: 4,
+                    for: 4,
                     costume: 2,
                     deltaTime: 60,
                     callback: () => this.x += 0.05
                 }, {
                     from: 0,
                     to: 4,
+                    for: 4,
                     costume: 1,
                     deltaTime: 60,
                     callback: () => this.x -= 0.05
+                }, {
+                    from: 0,
+                    to: 4,
+                    for: 4,
+                    costume: 3,
+                    deltaTime: 60,
+                    callback: () => this.y += 0.05
+                }, {
+                    from: 0,
+                    to: 4,
+                    for: 4,
+                    costume: 0,
+                    deltaTime: 60,
+                    callback: () => this.y -= 0.05
                 }]);
         }
     }
     onDraw() {
         if (this.isNPC)
             this.walk.path();
+        if (!FlyCollisions.isOnScreen(this))
+            console.log('no');
     }
     onDismiss() {
         throw new Error('Method not implemented.');
     }
     onEnter() {
-        bug();
+        //bug();
         this.costume = 3;
     }
 }
@@ -148,20 +167,15 @@ class FirstScene extends FlyScene {
         this.$renderer.draw();
     }
     onCreate(game) {
-        this.$game.refs.i = 0;
-        //setup debug camera
-        this.$debug.globalCamera();
         const sprite = new mySprite();
         const sprite2 = new mySprite(true);
-        sprite2.x = 0;
-        sprite2.z = -2.5;
-        sprite.z = -3;
+        sprite.z = -30;
         sprite.costume = 0;
-        sprite2.costume = 3;
-        const bg = this.$renderer.create(Object.assign(Object.assign({}, Shapes.rectangle(100, 100, { x: 0, y: 0, z: -10 })), { staticColor: { r: 0.4, g: 0.8, b: 0.5, a: 1 }, perspective: true }));
+        const bg = this.$renderer.create(Object.assign(Object.assign({}, Shapes.rectangle(1, 1, { x: 0, y: 0, z: -50 })), { staticColor: { r: 0.4, g: 0.8, b: 0.5, a: 1 }, perspective: true }));
         this.attach('bg', bg);
         this.attach(sprite2);
         this.attach(sprite);
+        this.attachCameraToEntity(sprite);
         this.$events.onArrowLeftPressed(() => {
             sprite.walk.left();
         });
